@@ -1,0 +1,5 @@
+tasks:
+  - init: cd movie-reviews && sh deploy.sh
+ports:
+  - port: 4242
+    onOpen: open-preview

@@ -12,8 +12,9 @@ on:
 
 jobs:
   build:
-    env:
-      working-directory: ./movie-reviews
+    defaults:
+      run:
+        working-directory: ./movie-reviews
     runs-on: ubuntu-latest
 
     steps:
@@ -45,8 +46,9 @@ jobs:
             !venv/
 
   deploy:
-    env:
-      working-directory: ./movie-reviews
+    defaults:
+      run:
+        working-directory: ./movie-reviews
     runs-on: ubuntu-latest
     needs: build
     environment:

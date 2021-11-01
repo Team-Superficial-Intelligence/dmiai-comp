@@ -5,9 +5,9 @@ Dimensions are initially 1500 x 1500 composed of 300x300 tiles with one tile hav
 from typing import Dict, List
 from numpy.random.mtrand import random
 import random
-import pandas as pd
 import cv2
 import numpy as np
+import json
 import xml.etree.ElementTree as ET
 import itertools
 from pathlib import Path
@@ -22,13 +22,14 @@ def get_img_path(img_name: str) -> str:
 
 
 def show_img(img: np.ndarray):
+    """ Helper function for showing images """
     cv2.imshow("Show", img)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
 
 def read_content(xml_file: str):
-
+    """ Parses a XML file of PASCAL VOC Annotations"""
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
@@ -48,29 +49,35 @@ def read_content(xml_file: str):
         list_with_single_boxes = [xmin, ymin, xmax, ymax]
         list_with_all_boxes.append(list_with_single_boxes)
 
-    return filename, list_with_all_boxes
+    return filename, list_with_all_boxes[0]
 
 
 def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarray:
+    """ Creates a picture with img_dims with waldo in it"""
     img = cv2.imread(get_img_path(img_path))
     bbox = ann_dict[img_path]
     bbox_x_len = bbox[2] - bbox[0]
-    new_x_min = bbox[0] - np.random.randint(0, img_dims[0] - bbox_x_len)
+    rand_x = np.random.randint(0, img_dims[0] - bbox_x_len)
+    new_x_min = bbox[0] - rand_x
     new_x_max = new_x_min + img_dims[0]
-    bboy_y_len = bbox[3] - bbox[1]
-    new_y_min = bbox[1] - np.random.randint(0, img_dims[1] - bboy_y_len)
+    bbox_y_len = bbox[3] - bbox[1]
+    rand_y = np.random.randint(0, img_dims[1] - bbox_y_len)
+    new_y_min = bbox[1] - rand_y
     new_y_max = new_y_min + img_dims[1]
-    new_bbox = [new_x_min, new_y_min, new_x_max, new_y_max]
+    new_bbox = [rand_x, rand_y, rand_x + bbox_x_len, rand_y + bbox_y_len]
     return img[new_y_min:new_y_max, new_x_min:new_x_max], new_bbox
 
 
-def draw_bbox(img_path, bboxes) -> np.ndarray:
-    img = cv2.imread(get_img_path(img_path))
-    bbox = bboxes[0]
-    return cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+def draw_bbox(img, bbox) -> np.ndarray:
+    """ Helper function for drawing a bounding box """
+    new_img = img.copy()
+    return cv2.rectangle(
+        new_img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2
+    )
 
 
 def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarray:
+    """ Creates a crop without waldo in it """
     img = cv2.imread(get_img_path(img_path))
     bbox = ann_dict[img_path]
     while True:
@@ -87,12 +94,13 @@ def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
             return img[y_min:y_max, x_min:x_max]
 
 
-def create_ann_dict(annotations: List[Path]) -> Dict[str, List[List[int]]]:
+def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
+
     ann_list = [[None, None] for _ in annotations]
     for i, annotation in enumerate(annotations):
         file_name, bboxes = read_content(annotation)
         ann_list[i][0] = file_name
-        ann_list[i][1] = bboxes[0]
+        ann_list[i][1] = bboxes
     return {item[0]: item[1] for item in ann_list}
 
 
@@ -107,24 +115,52 @@ def create_training_img(ann_dict, shape=(5, 5), crop_shape=(300, 300)):
     )
     num_random_imgs = shape[0] * shape[1] - 1
     random_imgs = [
-        create_empty_crop(img_path, ann_dict, img_dims=crop_shape)
+        (0, create_empty_crop(img_path, ann_dict, img_dims=crop_shape))
         for img_path in random.choices(list(ann_dict.keys()), k=num_random_imgs)
     ]
     positions = list(itertools.product(range(5), range(5)))
-
-    random_imgs.append(waldo_img)
+    random_imgs.append((1, waldo_img))
     random.shuffle(random_imgs)
-    imgs = random_imgs
+
+    waldo_idx = [item[0] for item in random_imgs].index(1)
+    imgs = [img[1] for img in random_imgs]
+    i = 0
     for (y_i, x_i), img in zip(positions, imgs):
         x = x_i * crop_shape[0]
         y = y_i * crop_shape[1]
         imgmatrix[y : y + crop_shape[0], x : x + crop_shape[1], :] = img
-    return imgmatrix
+        if i == waldo_idx:
+            waldo_bbox[0] += x
+            waldo_bbox[1] += y
+            waldo_bbox[2] += x
+            waldo_bbox[3] += y
+        i += 1
+    return imgmatrix, waldo_bbox
+
+
+def dump_json(obj, file_path):
+    with open(file_path, "w") as f:
+        json.dump(obj, f)
 
 
 annotations = list(ANN_DIR.glob("*.xml"))
 ann_dict = create_ann_dict(annotations)
 test_img = cv2.imread(get_img_path("1.jpg"))
 
-training_img = create_training_img(ann_dict)
-show_img(training_img)
+training_img, waldo_bbox = create_training_img(ann_dict)
+# show_img(training_img)
+new_img = draw_bbox(training_img, waldo_bbox)
+show_img(new_img)
+
+img_dir = TRAIN_DIR / "training_imgs"
+N = 3
+for i in range(N):
+    print(f"creating img {i+1} of {N}")
+    training_img, waldo_bbox = create_training_img(ann_dict)
+
+    print("writing data...")
+    file_path = img_dir / f"training_{i}.png"
+    bbox_dict = {file_path.name: waldo_bbox}
+    cv2.imwrite(str(file_path), training_img)
+    dump_json(bbox_dict, img_dir / "bboxes" / f"training_{i}.json")
+

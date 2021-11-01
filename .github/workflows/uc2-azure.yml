@@ -29,16 +29,17 @@ jobs:
         # docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/tsi-movie-reviews:${{ github.sha }}
         - run: |
             sh ./deploy.sh
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/tsi-movie-reviews:latest
-
+            docker
+            docker tag emily-movie-reviews-33s7de-prod:latest ${{ secrets.REGISTRY_LOGIN_SERVER }}/emily-movie-reviews-33s7de-prod:latest
+            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/emily-movie-reviews-33s7de-prod:latest
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
           with:
             resource-group: ${{ secrets.RESOURCE_GROUP_UC2 }}
             dns-name-label: ${{ secrets.RESOURCE_GROUP_UC2 }}${{ github.run_number }}
-            image: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}/tsi-movie-reviews:latest
+            image: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}/emily-movie-reviews-33s7de-prod:latest
             registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}
             registry-username: ${{ secrets.REGISTRY_USERNAME_UC2 }}
             registry-password: ${{ secrets.REGISTRY_PASSWORD_UC2 }}
-            name: tsi-movie-reviews
+            name: emily-movie-reviews-33s7de-prod
             location: 'west europe'

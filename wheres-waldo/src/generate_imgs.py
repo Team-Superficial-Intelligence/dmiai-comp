@@ -57,6 +57,7 @@ def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
     img = cv2.imread(get_img_path(img_path))
     bbox = ann_dict[img_path]
     bbox_x_len = bbox[2] - bbox[0]
+    retry_count = 0
     while True:
         rand_x = np.random.randint(0, img_dims[0] - bbox_x_len)
         new_x_min = bbox[0] - rand_x
@@ -69,6 +70,8 @@ def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
         new_img = img[new_y_min:new_y_max, new_x_min:new_x_max]
         if new_img.shape == (img_dims[0], img_dims[1], 3):
             return new_img, new_bbox
+        print(f"problems with {img_path}")
+        retry_count += 1
 
 
 def draw_bbox(img, bbox) -> np.ndarray:
@@ -115,8 +118,10 @@ def create_training_img(ann_dict, shape=(5, 5), crop_shape=(300, 300)):
     mat_x = w * crop_shape[0]
     mat_y = h * crop_shape[1]
     imgmatrix = np.zeros((mat_x, mat_y, 3), np.uint8)
+    waldo_selection = list(ann_dict.keys())
+    waldo_selection.remove("21.jpg")  # Weird edge case
     waldo_img, waldo_bbox = create_waldo_crop(
-        random.choice(list(ann_dict.keys())), ann_dict, img_dims=crop_shape
+        random.choice(waldo_selection), ann_dict, img_dims=crop_shape
     )
     num_random_imgs = shape[0] * shape[1] - 1
     random_imgs = [

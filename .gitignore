@@ -147,4 +147,3 @@ cython_debug/
 */.mounts
 */.devcontainer
 */.vscode
-docker-compose.yml

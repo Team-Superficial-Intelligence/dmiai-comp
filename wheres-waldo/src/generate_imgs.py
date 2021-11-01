@@ -64,3 +64,29 @@ for i, annotation in enumerate(annotations):
     ann_list[i][1] = bboxes[0]
 
 ann_dict = {item[0]: item[1] for item in ann_list}
+
+
+# Creating random waldo crops
+test_path = "1.jpg"
+test_img = cv2.imread(get_img_path(test_path))
+test_bbox = ann_dict[test_path]
+img_dims = (300, 300)
+
+
+crop_box = (new_x_min, new_y_min, new_x_max, new_y_max)
+
+new_img = draw_bbox(test_path, [crop_box])
+
+
+def create_waldo_crop(img_path: str, img_dims=(300, 300)) -> np.ndarray:
+
+    img = cv2.imread(get_img_path(img_path))
+    bbox_x_len = test_bbox[2] - test_bbox[0]
+    new_x_min = test_bbox[0] - np.random.randint(0, img_dims[0] - bbox_x_len)
+    new_x_max = new_x_min + img_dims[0]
+    bboy_y_len = test_bbox[3] - test_bbox[1]
+    new_y_min = test_bbox[1] - np.random.randint(0, img_dims[1] - bboy_y_len)
+    new_y_max = new_y_min + img_dims[1]
+
+    return img[new_y_min:new_y_max, new_x_min:new_x_max]
+

@@ -1,0 +1,9 @@
+
+version: "3"
+services:
+  emily-iq-test-d3mauh:
+
+    # Add your custom configuration here!
+
+    networks:
+      - emily-iq-test-d3mauh-network

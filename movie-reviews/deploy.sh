@@ -6,8 +6,8 @@ FILE_PATH=$( cd "$(dirname "$0")" ; pwd -P )
 FILE=./linux.zip
 RUNTIME=$(grep -oP '(?<=RUNTIME=).*' "$FILE_PATH/.prod.env")
 if [ ! -f "$FILE" ]; then
-  sudo apt install curl
-  sudo apt install unzip
+  sudo apt install -y curl
+  sudo apt install -y unzip
   curl -L https://github.com/amboltio/emily-cli/releases/download/Release-v1.2.4/linux.zip -O
   unzip linux.zip
   if [ "$RUNTIME" = "nvidia" ]; then

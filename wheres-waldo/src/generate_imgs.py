@@ -3,10 +3,13 @@ Generate training data for Waldo.
 Dimensions are initially 1500 x 1500 composed of 300x300 tiles with one tile having waldo in it 
 """
 from typing import Dict, List
+from numpy.random.mtrand import random
+import random
 import pandas as pd
 import cv2
 import numpy as np
 import xml.etree.ElementTree as ET
+import itertools
 from pathlib import Path
 
 TRAIN_DIR = Path("../../example-data/wheres-waldo")
@@ -57,7 +60,8 @@ def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
     bboy_y_len = bbox[3] - bbox[1]
     new_y_min = bbox[1] - np.random.randint(0, img_dims[1] - bboy_y_len)
     new_y_max = new_y_min + img_dims[1]
-    return img[new_y_min:new_y_max, new_x_min:new_x_max]
+    new_bbox = [new_x_min, new_y_min, new_x_max, new_y_max]
+    return img[new_y_min:new_y_max, new_x_min:new_x_max], new_bbox
 
 
 def draw_bbox(img_path, bboxes) -> np.ndarray:
@@ -92,5 +96,35 @@ def create_ann_dict(annotations: List[Path]) -> Dict[str, List[List[int]]]:
     return {item[0]: item[1] for item in ann_list}
 
 
+def create_training_img(ann_dict, shape=(5, 5), crop_shape=(300, 300)):
+    w = shape[0]
+    h = shape[1]
+    mat_x = w * crop_shape[0]
+    mat_y = h * crop_shape[1]
+    imgmatrix = np.zeros((mat_x, mat_y, 3), np.uint8)
+    waldo_img, waldo_bbox = create_waldo_crop(
+        random.choice(list(ann_dict.keys())), ann_dict, img_dims=crop_shape
+    )
+    num_random_imgs = shape[0] * shape[1] - 1
+    random_imgs = [
+        create_empty_crop(img_path, ann_dict, img_dims=crop_shape)
+        for img_path in random.choices(list(ann_dict.keys()), k=num_random_imgs)
+    ]
+    positions = list(itertools.product(range(5), range(5)))
+
+    random_imgs.append(waldo_img)
+    random.shuffle(random_imgs)
+    imgs = random_imgs
+    for (y_i, x_i), img in zip(positions, imgs):
+        x = x_i * crop_shape[0]
+        y = y_i * crop_shape[1]
+        imgmatrix[y : y + crop_shape[0], x : x + crop_shape[1], :] = img
+    return imgmatrix
+
+
 annotations = list(ANN_DIR.glob("*.xml"))
 ann_dict = create_ann_dict(annotations)
+test_img = cv2.imread(get_img_path("1.jpg"))
+
+training_img = create_training_img(ann_dict)
+show_img(training_img)

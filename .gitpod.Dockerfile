@@ -1,6 +1,6 @@
 FROM ambolt/emily:1.0.0-torch-nlp
 
-COPY requirements.txt /workspace/requirements.txt
+COPY movie-reviews/requirements.txt /workspace/requirements.txt
 WORKDIR /workspace
 
 # add installation of Debian packages here

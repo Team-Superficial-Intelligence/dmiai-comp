@@ -18,14 +18,14 @@ jobs:
         - name: 'Login via Azure CLI'
           uses: azure/login@v1
           with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
+            creds: ${{ secrets.AZURE_CREDENTIALS_UC2 }}
         
         - name: 'Build and push image'
           uses: azure/docker-login@v1
           with:
-            login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-            username: ${{ secrets.REGISTRY_USERNAME }}
-            password: ${{ secrets.REGISTRY_PASSWORD }}
+            login-server: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}
+            username: ${{ secrets.REGISTRY_USERNAME_UC2 }}
+            password: ${{ secrets.REGISTRY_PASSWORD_UC2 }}
         - run: |
             docker build . -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/sampleapp:${{ github.sha }}
             docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/sampleapp:${{ github.sha }}
@@ -33,11 +33,11 @@ jobs:
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
           with:
-            resource-group: ${{ secrets.RESOURCE_GROUP }}
-            dns-name-label: ${{ secrets.RESOURCE_GROUP }}${{ github.run_number }}
-            image: ${{ secrets.REGISTRY_LOGIN_SERVER }}/sampleapp:${{ github.sha }}
-            registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-            registry-username: ${{ secrets.REGISTRY_USERNAME }}
-            registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+            resource-group: ${{ secrets.RESOURCE_GROUP_UC2 }}
+            dns-name-label: ${{ secrets.RESOURCE_GROUP_UC2 }}${{ github.run_number }}
+            image: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}/sampleapp:${{ github.sha }}
+            registry-login-server: ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}
+            registry-username: ${{ secrets.REGISTRY_USERNAME_UC2 }}
+            registry-password: ${{ secrets.REGISTRY_PASSWORD_UC2 }}
             name: tsi-movie-reviews
             location: 'west europe'

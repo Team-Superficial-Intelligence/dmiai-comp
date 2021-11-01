@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'tsi-movie-reviews'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7262261075584975BC7666F690A14CC7 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_638786F82E014B00A97BF8A3D19E7AC8 }}

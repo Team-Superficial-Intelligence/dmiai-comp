@@ -47,10 +47,39 @@ def read_content(xml_file: str):
     return filename, list_with_all_boxes
 
 
+def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarray:
+    img = cv2.imread(get_img_path(img_path))
+    bbox = ann_dict[img_path]
+    bbox_x_len = bbox[2] - bbox[0]
+    new_x_min = bbox[0] - np.random.randint(0, img_dims[0] - bbox_x_len)
+    new_x_max = new_x_min + img_dims[0]
+    bboy_y_len = bbox[3] - bbox[1]
+    new_y_min = bbox[1] - np.random.randint(0, img_dims[1] - bboy_y_len)
+    new_y_max = new_y_min + img_dims[1]
+    return img[new_y_min:new_y_max, new_x_min:new_x_max]
+
+
 def draw_bbox(img_path, bboxes) -> np.ndarray:
     img = cv2.imread(get_img_path(img_path))
     bbox = bboxes[0]
     return cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+
+
+def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarray:
+    img = cv2.imread(get_img_path(img_path))
+    bbox = ann_dict[img_path]
+    while True:
+        x_min = np.random.randint(0, img.shape[1] - img_dims[0])
+        y_min = np.random.randint(0, img.shape[0] - img_dims[1])
+        x_max = x_min + img_dims[0]
+        y_max = y_min + img_dims[1]
+        # Check that there's no waldo
+        to_the_left = x_min > bbox[2]
+        above = y_min > bbox[3]
+        to_the_right = x_max < bbox[0]
+        below = y_max < bbox[1]
+        if to_the_left or above or to_the_right or below:
+            return img[y_min:y_max, x_min:x_max]
 
 
 annotations = list(ANN_DIR.glob("*.xml"))
@@ -78,15 +107,6 @@ crop_box = (new_x_min, new_y_min, new_x_max, new_y_max)
 new_img = draw_bbox(test_path, [crop_box])
 
 
-def create_waldo_crop(img_path: str, img_dims=(300, 300)) -> np.ndarray:
-
-    img = cv2.imread(get_img_path(img_path))
-    bbox_x_len = test_bbox[2] - test_bbox[0]
-    new_x_min = test_bbox[0] - np.random.randint(0, img_dims[0] - bbox_x_len)
-    new_x_max = new_x_min + img_dims[0]
-    bboy_y_len = test_bbox[3] - test_bbox[1]
-    new_y_min = test_bbox[1] - np.random.randint(0, img_dims[1] - bboy_y_len)
-    new_y_max = new_y_min + img_dims[1]
-
-    return img[new_y_min:new_y_max, new_x_min:new_x_max]
-
+empty_crop = create_empty_crop("2.jpg", ann_dict)
+ann_dict.keys()
+show_img(empty_crop)

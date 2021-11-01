@@ -4,10 +4,10 @@ services:
   emily-movie-reviews-33s7de-prod:
     image: emily-movie-reviews-33s7de-prod
     container_name: emily-movie-reviews-33s7de-prod
-    command: python3 ${MAIN} -e ".prod.env"
+    command: python3 api.py -e ".prod.env"
     restart: always
     ports:
-      - ${HOST_PORT}:${CONTAINER_PORT}
+      - 4242:4242
     networks:
       - emily-movie-reviews-33s7de-prod-network
     build:
@@ -17,11 +17,11 @@ services:
       - .:/workspace:cached
       - ./review_data:/workspace/data
 
-    runtime: ${RUNTIME}
+    runtime: runc
     environment:
       - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
       - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
-    ipc: ${IPC}
+    ipc: private
 networks:
   emily-movie-reviews-33s7de-prod-network:
     name: emily-movie-reviews-33s7de-prod-network

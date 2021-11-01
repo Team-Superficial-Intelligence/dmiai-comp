@@ -2,6 +2,7 @@
 Generate training data for Waldo. 
 Dimensions are initially 1500 x 1500 composed of 300x300 tiles with one tile having waldo in it 
 """
+from typing import Dict, List
 import pandas as pd
 import cv2
 import numpy as np
@@ -82,31 +83,14 @@ def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
             return img[y_min:y_max, x_min:x_max]
 
 
+def create_ann_dict(annotations: List[Path]) -> Dict[str, List[List[int]]]:
+    ann_list = [[None, None] for _ in annotations]
+    for i, annotation in enumerate(annotations):
+        file_name, bboxes = read_content(annotation)
+        ann_list[i][0] = file_name
+        ann_list[i][1] = bboxes[0]
+    return {item[0]: item[1] for item in ann_list}
+
+
 annotations = list(ANN_DIR.glob("*.xml"))
-
-ex_file, bboxes = read_content(annotations[0])
-
-ann_list = [[None, None] for _ in annotations]
-for i, annotation in enumerate(annotations):
-    file_name, bboxes = read_content(annotation)
-    ann_list[i][0] = file_name
-    ann_list[i][1] = bboxes[0]
-
-ann_dict = {item[0]: item[1] for item in ann_list}
-
-
-# Creating random waldo crops
-test_path = "1.jpg"
-test_img = cv2.imread(get_img_path(test_path))
-test_bbox = ann_dict[test_path]
-img_dims = (300, 300)
-
-
-crop_box = (new_x_min, new_y_min, new_x_max, new_y_max)
-
-new_img = draw_bbox(test_path, [crop_box])
-
-
-empty_crop = create_empty_crop("2.jpg", ann_dict)
-ann_dict.keys()
-show_img(empty_crop)
+ann_dict = create_ann_dict(annotations)

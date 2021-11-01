@@ -57,15 +57,18 @@ def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
     img = cv2.imread(get_img_path(img_path))
     bbox = ann_dict[img_path]
     bbox_x_len = bbox[2] - bbox[0]
-    rand_x = np.random.randint(0, img_dims[0] - bbox_x_len)
-    new_x_min = bbox[0] - rand_x
-    new_x_max = new_x_min + img_dims[0]
-    bbox_y_len = bbox[3] - bbox[1]
-    rand_y = np.random.randint(0, img_dims[1] - bbox_y_len)
-    new_y_min = bbox[1] - rand_y
-    new_y_max = new_y_min + img_dims[1]
-    new_bbox = [rand_x, rand_y, rand_x + bbox_x_len, rand_y + bbox_y_len]
-    return img[new_y_min:new_y_max, new_x_min:new_x_max], new_bbox
+    while True:
+        rand_x = np.random.randint(0, img_dims[0] - bbox_x_len)
+        new_x_min = bbox[0] - rand_x
+        new_x_max = new_x_min + img_dims[0]
+        bbox_y_len = bbox[3] - bbox[1]
+        rand_y = np.random.randint(0, img_dims[1] - bbox_y_len)
+        new_y_min = bbox[1] - rand_y
+        new_y_max = new_y_min + img_dims[1]
+        new_bbox = [rand_x, rand_y, rand_x + bbox_x_len, rand_y + bbox_y_len]
+        new_img = img[new_y_min:new_y_max, new_x_min:new_x_max]
+        if new_img.shape == (img_dims[0], img_dims[1], 3):
+            return new_img, new_bbox
 
 
 def draw_bbox(img, bbox) -> np.ndarray:
@@ -91,7 +94,9 @@ def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
         to_the_right = x_max < bbox[0]
         below = y_max < bbox[1]
         if to_the_left or above or to_the_right or below:
-            return img[y_min:y_max, x_min:x_max]
+            new_img = img[y_min:y_max, x_min:x_max]
+            if new_img.shape == (300, 300, 3):
+                return new_img
 
 
 def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
@@ -153,7 +158,7 @@ new_img = draw_bbox(training_img, waldo_bbox)
 show_img(new_img)
 
 img_dir = TRAIN_DIR / "training_imgs"
-N = 3
+N = 100
 for i in range(N):
     print(f"creating img {i+1} of {N}")
     training_img, waldo_bbox = create_training_img(ann_dict)

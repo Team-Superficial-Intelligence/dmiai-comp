@@ -30,8 +30,8 @@ jobs:
         - run: |
             sh ./deploy.sh
             docker
-            docker tag emily-movie-reviews-33s7de-prod:latest ${{ secrets.REGISTRY_LOGIN_SERVER }}/emily-movie-reviews-33s7de-prod:latest
-            docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/emily-movie-reviews-33s7de-prod:latest
+            docker tag emily-movie-reviews-33s7de-prod:latest ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}/emily-movie-reviews-33s7de-prod:latest
+            docker push ${{ secrets.REGISTRY_LOGIN_SERVER_UC2 }}/emily-movie-reviews-33s7de-prod:latest
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
           with:

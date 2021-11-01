@@ -34,7 +34,7 @@ jobs:
         - name: 'Deploy to Azure Container Instances'
           uses: 'azure/aci-deploy@v1'
           with:
-            environment-variables: PORT=4242 IPC=private RUNTIME=runc HOST_IP=0.0.0.0 HOST_PORT=4242 CONTAINER_PORT=4242 NVIDIA_VISIBLE_DEVICES= NVIDIA_DRIVER_CAPABILITIES= COMPOSE_PROJECT_NAME=emily-movie-reviews-33s7de PYTHONPATH=./ MAIN=api.py
+            environment-variables: PORT=4242 IPC=private RUNTIME=runc HOST_IP=0.0.0.0 HOST_PORT=4242 CONTAINER_PORT=4242 COMPOSE_PROJECT_NAME=emily-movie-reviews-33s7de PYTHONPATH=./ MAIN=api.py
             ports: 4242
             resource-group: ${{ secrets.RESOURCE_GROUP_UC2 }}
             dns-name-label: ${{ secrets.RESOURCE_GROUP_UC2 }}${{ github.run_number }}

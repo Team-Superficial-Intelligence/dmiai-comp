@@ -3,3 +3,5 @@ tasks:
 ports:
   - port: 4242
     onOpen: open-preview
+image:
+  file: .gitpod.Dockerfile

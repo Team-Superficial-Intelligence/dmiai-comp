@@ -115,23 +115,26 @@ def write_text(s: str, file_path: Path):
         f.write(s)
 
 
-annotations = list(ANN_DIR.glob("*.xml"))
-ann_dict = create_ann_dict(annotations)
-test_img = cv2.imread(get_img_path("1.jpg"))
+if __name__ == "__main__":
+    annotations = list(ANN_DIR.glob("*.xml"))
+    ann_dict = create_ann_dict(annotations)
+    test_img = cv2.imread(get_img_path("1.jpg"))
 
-val_idx = int(len(ann_dict) * 0.8)
-for i, (img_name, bbox) in enumerate(ann_dict.items()):
-    if img_name == "21.jpg":
-        continue
-    for j in range(3):
-        waldo_img, waldo_bbox = create_waldo_crop(img_name, ann_dict)
-        yolo_bbox = format_yolo_bbox(waldo_bbox)
-        file_id = create_random_id()
-        if i <= val_idx:
-            write_text(
-                format_yolo_string(yolo_bbox), TRAIN_LABEL_DIR / f"{file_id}.txt"
-            )
-            cv2.imwrite(str(TRAIN_IMG_DIR / f"{file_id}.jpg"), waldo_img)
-        else:
-            write_text(format_yolo_string(yolo_bbox), VAL_LABEL_DIR / f"{file_id}.txt")
-            cv2.imwrite(str(VAL_IMG_DIR / f"{file_id}.jpg"), waldo_img)
+    val_idx = int(len(ann_dict) * 0.8)
+    for i, (img_name, bbox) in enumerate(ann_dict.items()):
+        if img_name == "21.jpg":
+            continue
+        for j in range(3):
+            waldo_img, waldo_bbox = create_waldo_crop(img_name, ann_dict)
+            yolo_bbox = format_yolo_bbox(waldo_bbox)
+            file_id = create_random_id()
+            if i <= val_idx:
+                write_text(
+                    format_yolo_string(yolo_bbox), TRAIN_LABEL_DIR / f"{file_id}.txt"
+                )
+                cv2.imwrite(str(TRAIN_IMG_DIR / f"{file_id}.jpg"), waldo_img)
+            else:
+                write_text(
+                    format_yolo_string(yolo_bbox), VAL_LABEL_DIR / f"{file_id}.txt"
+                )
+                cv2.imwrite(str(VAL_IMG_DIR / f"{file_id}.jpg"), waldo_img)

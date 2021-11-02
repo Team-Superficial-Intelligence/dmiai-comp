@@ -145,24 +145,25 @@ def dump_json(obj, file_path):
         json.dump(obj, f)
 
 
-annotations = list(ANN_DIR.glob("*.xml"))
-ann_dict = create_ann_dict(annotations)
-test_img = cv2.imread(get_img_path("1.jpg"))
+if __name__ == "__main__":
+    annotations = list(ANN_DIR.glob("*.xml"))
+    ann_dict = create_ann_dict(annotations)
+    test_img = cv2.imread(get_img_path("1.jpg"))
 
-training_img, waldo_bbox = create_training_img(ann_dict)
-# show_img(training_img)
-new_img = draw_bbox(training_img, waldo_bbox)
-show_img(new_img)
-
-img_dir = TRAIN_DIR / "training_imgs"
-N = 100
-for i in range(N):
-    print(f"creating img {i+1} of {N}")
     training_img, waldo_bbox = create_training_img(ann_dict)
+    # show_img(training_img)
+    new_img = draw_bbox(training_img, waldo_bbox)
+    show_img(new_img)
 
-    print("writing data...")
-    file_path = img_dir / f"training_{i}.png"
-    bbox_dict = {file_path.name: waldo_bbox}
-    cv2.imwrite(str(file_path), training_img)
-    dump_json(bbox_dict, img_dir / "bboxes" / f"training_{i}.json")
+    img_dir = TRAIN_DIR / "training_imgs"
+    N = 100
+    for i in range(N):
+        print(f"creating img {i+1} of {N}")
+        training_img, waldo_bbox = create_training_img(ann_dict)
+
+        print("writing data...")
+        file_path = img_dir / f"training_{i}.png"
+        bbox_dict = {file_path.name: waldo_bbox}
+        cv2.imwrite(str(file_path), training_img)
+        dump_json(bbox_dict, img_dir / "bboxes" / f"training_{i}.json")
 

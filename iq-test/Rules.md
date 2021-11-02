@@ -34,3 +34,10 @@
 # Model Setup
 - which picture does the test set look like
 - Then apply Rules (e.g. Star Rules)
+
+## Rule categories
+- Colour addition
+- Rotation / flip (NB: Maybe only one figure?)
+- Object movement
+- Game of Life
+- Softness :))

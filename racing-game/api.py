@@ -14,6 +14,11 @@ from static.render import render
 from utilities.utilities import get_uptime
 import random
 
+#### TEMP LOGGING ####
+import json
+import time
+#### /TEMP LOGGING ####
+
 load_env()
 
 # --- Welcome to your Emily API! --- #
@@ -37,6 +42,13 @@ def predict(request: PredictRequest) -> PredictResponse:
 
     # You receive the entire game state in the request object.
     # Read the game state and decide what to do in the next game tick.
+
+    #### TEMP LOGGING ####
+    req_group = str(time.time_ns())
+    f = open("/workspace/rq_{}.json".format(req_group), "w")
+    json.dump(request, f, default=repr)
+    f.close()
+    #### /TEMP LOGGING ####
 
     print("Getting loop.")
     # print(str(PredictRequest["sensors"]["left_side"]))

@@ -3,7 +3,9 @@ Get images in coco-format for yolo
 """
 import numpy as np
 import cv2
+import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Dict, List
 
 TRAIN_DIR = Path("../../example-data/wheres-waldo")
 IMG_DIR = TRAIN_DIR / "images"
@@ -54,3 +56,34 @@ def create_waldo_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
             return new_img, new_bbox
         print(f"problems with {img_path}")
         retry_count += 1
+
+
+def read_content(xml_file: str):
+    """ Parses a XML file of PASCAL VOC Annotations"""
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    list_with_all_boxes = []
+    for boxes in root.iter("object"):
+        filename = root.find("filename").text
+        ymin, xmin, ymax, xmax = None, None, None, None
+        ymin = int(boxes.find("bndbox/ymin").text)
+        xmin = int(boxes.find("bndbox/xmin").text)
+        ymax = int(boxes.find("bndbox/ymax").text)
+        xmax = int(boxes.find("bndbox/xmax").text)
+        list_with_single_boxes = [xmin, ymin, xmax, ymax]
+        list_with_all_boxes.append(list_with_single_boxes)
+    return filename, list_with_all_boxes[0]
+
+
+def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
+    ann_list = [[None, None] for _ in annotations]
+    for i, annotation in enumerate(annotations):
+        file_name, bboxes = read_content(annotation)
+        ann_list[i][0] = file_name
+        ann_list[i][1] = bboxes
+    return {item[0]: item[1] for item in ann_list}
+
+
+annotations = list(ANN_DIR.glob("*.xml"))
+ann_dict = create_ann_dict(annotations)
+test_img = cv2.imread(get_img_path("1.jpg"))

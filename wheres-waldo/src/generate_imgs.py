@@ -32,23 +32,16 @@ def read_content(xml_file: str):
     """ Parses a XML file of PASCAL VOC Annotations"""
     tree = ET.parse(xml_file)
     root = tree.getroot()
-
     list_with_all_boxes = []
-
     for boxes in root.iter("object"):
-
         filename = root.find("filename").text
-
         ymin, xmin, ymax, xmax = None, None, None, None
-
         ymin = int(boxes.find("bndbox/ymin").text)
         xmin = int(boxes.find("bndbox/xmin").text)
         ymax = int(boxes.find("bndbox/ymax").text)
         xmax = int(boxes.find("bndbox/xmax").text)
-
         list_with_single_boxes = [xmin, ymin, xmax, ymax]
         list_with_all_boxes.append(list_with_single_boxes)
-
     return filename, list_with_all_boxes[0]
 
 
@@ -103,7 +96,6 @@ def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarra
 
 
 def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
-
     ann_list = [[None, None] for _ in annotations]
     for i, annotation in enumerate(annotations):
         file_name, bboxes = read_content(annotation)

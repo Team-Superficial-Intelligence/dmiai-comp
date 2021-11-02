@@ -3,17 +3,30 @@ Get images in coco-format for yolo
 """
 import numpy as np
 import cv2
+import random
+import string
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 TRAIN_DIR = Path("../../example-data/wheres-waldo")
 IMG_DIR = TRAIN_DIR / "images"
 ANN_DIR = IMG_DIR / "annotations"
+DATA_DIR = Path.home() / "datasets" / "waldo"
+NEW_IMG_DIR = DATA_DIR / "images"
+TRAIN_IMG_DIR = NEW_IMG_DIR / "train"
+VAL_IMG_DIR = NEW_IMG_DIR / "val"
+LABEL_DIR = DATA_DIR / "labels"
+TRAIN_LABEL_DIR = LABEL_DIR / "train"
+VAL_LABEL_DIR = LABEL_DIR / "val"
 
 
 def get_img_path(img_name: str) -> str:
     return str(IMG_DIR / img_name)
+
+
+def create_random_id(N=8):
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
 
 
 def create_empty_crop(img_path: str, ann_dict, img_dims=(300, 300)) -> np.ndarray:
@@ -84,6 +97,41 @@ def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
     return {item[0]: item[1] for item in ann_list}
 
 
+def format_yolo_bbox(bbox: List[int], img_dims=(300, 300)) -> List[float]:
+    x_mid = ((bbox[0] + bbox[2]) / 2) / img_dims[0]
+    y_mid = ((bbox[1] + bbox[3]) / 2) / img_dims[1]
+    width = (bbox[2] - bbox[2]) / img_dims[0]
+    height = (bbox[3] - bbox[1]) / img_dims[1]
+    return [x_mid, y_mid, width, height]
+
+
+def format_yolo_string(bbox: List[float]) -> str:
+    full_dat = ["0"] + bbox
+    return "\t".join(str(x) for x in full_dat)
+
+
+def write_text(s: str, file_path: Path):
+    with open(file_path, "w") as f:
+        f.write(s)
+
+
 annotations = list(ANN_DIR.glob("*.xml"))
 ann_dict = create_ann_dict(annotations)
 test_img = cv2.imread(get_img_path("1.jpg"))
+
+val_idx = int(len(ann_dict) * 0.8)
+for i, (img_name, bbox) in enumerate(ann_dict.items()):
+    if img_name == "21.jpg":
+        continue
+    for j in range(3):
+        waldo_img, waldo_bbox = create_waldo_crop(img_name, ann_dict)
+        yolo_bbox = format_yolo_bbox(waldo_bbox)
+        file_id = create_random_id()
+        if i <= val_idx:
+            write_text(
+                format_yolo_string(yolo_bbox), TRAIN_LABEL_DIR / f"{file_id}.txt"
+            )
+            cv2.imwrite(str(TRAIN_IMG_DIR / f"{file_id}.jpg"), waldo_img)
+        else:
+            write_text(format_yolo_string(yolo_bbox), VAL_LABEL_DIR / f"{file_id}.txt")
+            cv2.imwrite(str(VAL_IMG_DIR / f"{file_id}.jpg"), waldo_img)

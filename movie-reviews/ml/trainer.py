@@ -1,3 +1,4 @@
+from fastai.text.data import TextDataLoaders
 from ml.model import Model
 import pandas as pd
 import nltk
@@ -73,11 +74,12 @@ class Trainer:
 
         # Unpack request
         dataset_path = './data/kaggle/train.tsv.zip'
-        save_path = './data/nb.pickle'
-
-        # Read the dataset from the dataset_path
         train_data = self._load_train_data(dataset_path)
-
+        dls = TextDataLoaders.from_df(train_data,
+                                      text_col='Phrase',
+                                      label_col='Sentiment')
+        return dls
+        dls.show_batch(max_n=3)
         # Preprocess the dataset
         preprocessed_train_data = self._preprocess_train_data(
             train_data, './data/preprocessed.pickle')

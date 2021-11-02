@@ -46,8 +46,8 @@ def predict(request: PredictRequest) -> PredictResponse:
 
 @app.get('/superfuntime')
 def superfuntime():
-    emily.superfuntime()
-    return HTMLResponse("Hi!")
+    tok = emily.superfuntime()
+    return HTMLResponse(str(tok))
 
 
 @app.get('/api')

@@ -1,8 +1,14 @@
 from ml.model import Model
+from ml.trainer import Trainer
 
 
 class Toolkit:
     def test(self):
-        m = Model()
-        m.tokenize()
-        return
+        t = Trainer()
+        return t.train()
+
+        #m = Model()
+
+        #toks = m.tokenize("hey motherfuckers!")
+
+        #return m.tokenize("hey motherfuckers!")

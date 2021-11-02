@@ -1,16 +1,18 @@
 from collections import defaultdict
+import collections
 import pickle
 import json
-from typing import List
+from typing import Collection, List
+from fastai.data.external import URLs
 from tqdm import tqdm
 import numpy as np
 import torch
 import torch.optim as optim
 from fastai import *
 from fastai.text.core import BaseTokenizer, Tokenizer
-# from fastai.callbacks import *
-from transformers import PreTrainedModel, PreTrainedTokenizer, PretrainedConfig
-from transformers import XLNetForSequenceClassification, XLNetTokenizer, XLNetConfig
+from fastai.text.data import *
+from fastai.callback import *
+from transformers import PreTrainedTokenizer, XLNetTokenizer
 
 
 class FastAiTokenizer(BaseTokenizer):
@@ -33,6 +35,36 @@ class FastAiTokenizer(BaseTokenizer):
 
         return tokens
 
+    def make_vocab(self):
+        make_vocab()
+
+
+# class TransformersVocab(Vocab):
+#     def __init__(self, tokenizer: PreTrainedTokenizer):
+#         super(TransformersVocab, self).__init__(itos=[])
+#         self.tokenizer = tokenizer
+
+#     def numericalize(self, t: Collection[str]) -> List[int]:
+#         "Convert a list of tokens `t` to their ids."
+#         return self.tokenizer.convert_tokens_to_ids(t)
+
+#     def textify(self, nums: Collection[int], sep=' ') -> List[str]:
+#         "Convert a list of `nums` to their tokens."
+#         nums = np.array(nums).tolist()
+#         return sep.join(
+#             self.tokenizer.convert_ids_to_tokens(nums)
+#         ) if sep is not None else self.tokenizer.convert_ids_to_tokens(nums)
+
+#     def __getstate__(self):
+#         return {'itos': self.itos, 'tokenizer': self.tokenizer}
+
+#     def __setstate__(self, state: dict):
+#         self.itos = state['itos']
+#         self.tokenizer = state['tokenizer']
+#         self.stoi = collections.defaultdict(
+#             int, {v: k
+#                   for k, v in enumerate(self.itos)})
+
 
 class Model():
     """
@@ -46,12 +78,21 @@ class Model():
     def fit(self, review_sentiment_pairs):
         return
 
-    def tokenize(self):
+    def load_tokenizer(self):
         if self.fai_tok is None:
-            self.ptt = FastAiTokenizer()
+            self.ptt = XLNetTokenizer.from_pretrained('xlnet-large-cased')
+            # FastAiTokenizer()
             self.fai_tok = Tokenizer(self.ptt)
-        self.ptt.save_vocabulary()
+        return self.ptt
 
+    def tokenize(self, txt):
+        self.load_tokenizer()
+        # self.ptt.save_vocabulary()
+        return self.ptt.tokenize(txt)
+
+    def make_databunch(self):
+        pass
+    
     def forward(self, sample):
         return
 

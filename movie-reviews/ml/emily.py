@@ -40,4 +40,4 @@ class Emily:
         return self.evaluator(request)
 
     def superfuntime(self):
-        self.toolkit.test()
+        return self.toolkit.test()

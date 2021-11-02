@@ -35,10 +35,13 @@
 # Model Setup
 - which picture does the test set look like
 - Then apply Rules (e.g. Star Rules)
+- Have threshold values for similarity :))
+- Rotate beats transfer check true :))
 
 ## Rule categories
 - Colour addition
 - Rotation / flip (NB: Maybe only one figure?)
-- Object movement
+- Object movement (rotation task?)
 - Game of Life
+  - Use if grid :))
 - Softness :))

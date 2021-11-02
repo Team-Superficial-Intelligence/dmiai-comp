@@ -44,13 +44,10 @@ def show_img(img):
     cv2.destroyAllWindows()
 
 
-task_img_paths = list(IMG_DIR.glob("*image*.png"))
-
-img = read_img(task_img_paths[0])
-
-show_img(img)
-
-img_list = split_img(img)
-
-show_img(img_list[0][2])
+if __name__ == "__main__":
+    task_img_paths = list(IMG_DIR.glob("*image*.png"))
+    img = read_img(task_img_paths[0])
+    show_img(img)
+    img_list = split_img(img)
+    show_img(img_list[0][2])
 

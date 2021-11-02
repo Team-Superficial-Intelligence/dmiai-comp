@@ -9,6 +9,7 @@
 - (Figure in square) Movement 1
   - Move object same direction for X pixels
     - Calculate difference in Pixels, use to predict next step
+  - Ignore boundary + rotate 45 degrees :))
 - (Dots 3x.) Rotation 2
   - Rotate 45 degrees counterclockwise
 - (Dots 4x4.) Pop-up 1

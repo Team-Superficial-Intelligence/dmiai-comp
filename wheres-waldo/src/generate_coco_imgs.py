@@ -8,6 +8,8 @@ import string
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List, Union
+import imgaug as ia
+import imgaug.augmenters as iaa
 
 TRAIN_DIR = Path("../../example-data/wheres-waldo")
 IMG_DIR = TRAIN_DIR / "images"
@@ -105,6 +107,14 @@ def format_yolo_bbox(bbox: List[int], img_dims=(300, 300)) -> List[float]:
     return [x_mid, y_mid, width, height]
 
 
+def format_yolo_bbox_aug(bbox: List[int], img_dims=(300, 300)) -> List[float]:
+    x_mid = ((bbox.x1 + bbox.x2) / 2) / img_dims[0]
+    y_mid = ((bbox.y1 + bbox.y2) / 2) / img_dims[1]
+    width = (bbox.x2 - bbox.x1) / img_dims[0]
+    height = (bbox.y2 - bbox.y1) / img_dims[1]
+    return [x_mid, y_mid, width, height]
+
+
 def format_yolo_string(bbox: List[float]) -> str:
     full_dat = ["0"] + bbox
     return "\t".join(str(x) for x in full_dat)
@@ -115,10 +125,29 @@ def write_text(s: str, file_path: Path):
         f.write(s)
 
 
+def augmentation_pipeline():
+    return iaa.Sequential(
+        [iaa.Fliplr(0.5), iaa.GaussianBlur((0, 3.0)), iaa.Dropout(p=0.01)],
+    )
+
+
 if __name__ == "__main__":
     annotations = list(ANN_DIR.glob("*.xml"))
     ann_dict = create_ann_dict(annotations)
-    test_img = cv2.imread(get_img_path("1.jpg"))
+
+    seq = augmentation_pipeline()
+    N = 10  # Augs per img
+    train_paths = random.choices(list(ann_dict.keys()), k=17)
+    train_paths = [x for x in train_paths if x != "21.jpg"]
+    train_dict = [create_waldo_crop(img_name, ann_dict) for img_name in train_paths]
+    train_imgs = [x[0] for x in train_dict]
+    train_boxes = [
+        [ia.BoundingBox(x1=box[1][0], y1=box[1][1], x2=box[1][2], y2=box[1][3])]
+        for box in train_dict
+    ]
+
+    aug_imgs, aug_bbs = seq(images=train_imgs * N, bounding_boxes=train_boxes * N)
+    proper_bbs = [format_yolo_bbox_aug(aug_bb[0]) for aug_bb in aug_bbs]
 
     val_idx = int(len(ann_dict) * 0.8)
     for i, (img_name, bbox) in enumerate(ann_dict.items()):

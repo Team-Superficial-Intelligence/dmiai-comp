@@ -136,7 +136,7 @@ if __name__ == "__main__":
     ann_dict = create_ann_dict(annotations)
 
     seq = augmentation_pipeline()
-    N = 10  # Augs per img
+    N = 100  # Augs per img
     train_paths = random.choices(list(ann_dict.keys()), k=17)
     train_paths = [x for x in train_paths if x != "21.jpg"]
     train_dict = [create_waldo_crop(img_name, ann_dict) for img_name in train_paths]
@@ -148,6 +148,31 @@ if __name__ == "__main__":
 
     aug_imgs, aug_bbs = seq(images=train_imgs * N, bounding_boxes=train_boxes * N)
     proper_bbs = [format_yolo_bbox_aug(aug_bb[0]) for aug_bb in aug_bbs]
+
+    print("writing augmented imgs!")
+    for img, bbox in zip(aug_imgs, proper_bbs):
+        random_name = create_random_id()
+        label_path = TRAIN_LABEL_DIR / f"{random_name}.txt"
+        img_path = TRAIN_IMG_DIR / f"{random_name}.jpg"
+        cv2.imwrite(str(img_path), img)
+        write_text(format_yolo_string(bbox), label_path)
+
+    print("writing normal imgs!")
+    for img, bbox in zip(train_imgs, train_boxes):
+        random_name = create_random_id()
+        proper_box = format_yolo_bbox_aug(bbox[0])
+        label_path = TRAIN_LABEL_DIR / f"{random_name}.txt"
+        img_path = TRAIN_IMG_DIR / f"{random_name}.jpg"
+        cv2.imwrite(str(img_path), img)
+        write_text(format_yolo_string(proper_box), label_path)
+
+    print("generating empty imgs!")
+    for i in range(500):
+        random_img = random.choice(list(ann_dict.keys()))
+        random_name = create_random_id()
+        img = create_empty_crop(random_img, ann_dict)
+        img_path = TRAIN_IMG_DIR / f"{random_name}.jpg"
+        cv2.imwrite(str(img_path), img)
 
     val_idx = int(len(ann_dict) * 0.8)
     for i, (img_name, bbox) in enumerate(ann_dict.items()):

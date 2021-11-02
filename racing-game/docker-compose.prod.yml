@@ -1,0 +1,29 @@
+
+version: "3"
+services:
+  emily-racing-game-sbymvg-prod:
+    image: emily-racing-game-sbymvg-prod
+    container_name: emily-racing-game-sbymvg-prod
+    command: python3 ${MAIN} -e ".prod.env"
+    restart: always
+    ports:
+      - ${HOST_PORT}:${CONTAINER_PORT}
+    networks:
+      - emily-racing-game-sbymvg-prod-network
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - .:/workspace:cached
+      - workspace/data:/workspace/data
+
+    runtime: ${RUNTIME}
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+      - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+    ipc: ${IPC}
+networks:
+  emily-racing-game-sbymvg-prod-network:
+    name: emily-racing-game-sbymvg-prod-network
+    driver: bridge
+  

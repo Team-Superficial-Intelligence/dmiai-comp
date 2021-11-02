@@ -1,0 +1,9 @@
+
+version: "3"
+services:
+  emily-racing-game-sbymvg:
+
+    # Add your custom configuration here!
+
+    networks:
+      - emily-racing-game-sbymvg-network

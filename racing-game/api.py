@@ -38,6 +38,9 @@ def predict(request: PredictRequest) -> PredictResponse:
     # You receive the entire game state in the request object.
     # Read the game state and decide what to do in the next game tick.
 
+    print("Getting loop.")
+    # print(str(PredictRequest["sensors"]["left_side"]))
+
     if request.did_crash:
         logger.info(f'Crashed after {request.elapsed_time_ms} ms')
 
@@ -46,7 +49,7 @@ def predict(request: PredictRequest) -> PredictResponse:
                ActionType.NOTHING]
 
     return PredictResponse(
-        action=random.choice(actions)
+        action=actions[0]
     )
 
 

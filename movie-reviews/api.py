@@ -1,4 +1,3 @@
-
 import uvicorn
 from fastapi import FastAPI
 from starlette.responses import HTMLResponse
@@ -12,6 +11,9 @@ from settings import Settings, load_env
 from static.render import render
 from utilities.utilities import get_uptime
 import random
+from ml.emily import Emily
+
+emily = Emily()
 
 load_env()
 
@@ -22,7 +24,6 @@ load_env()
 # are accessible from any origin by default.
 # Make sure to restrict access below to origins you
 # trust before deploying your API to production.
-
 
 app = FastAPI()
 settings = Settings()
@@ -43,6 +44,12 @@ def predict(request: PredictRequest) -> PredictResponse:
     return PredictResponse(ratings=ratings)
 
 
+@app.get('/superfuntime')
+def superfuntime():
+    emily.superfuntime()
+    return HTMLResponse("Hi!")
+
+
 @app.get('/api')
 def hello():
     return {
@@ -54,18 +61,11 @@ def hello():
 @app.get('/')
 def index():
     return HTMLResponse(
-        render(
-            'static/index.html',
-            host=settings.HOST_IP,
-            port=settings.CONTAINER_PORT
-        )
-    )
+        render('static/index.html',
+               host=settings.HOST_IP,
+               port=settings.CONTAINER_PORT))
 
 
 if __name__ == '__main__':
 
-    uvicorn.run(
-        'api:app',
-        host=settings.HOST_IP,
-        port=settings.CONTAINER_PORT
-    )
+    uvicorn.run('api:app', host=settings.HOST_IP, port=settings.CONTAINER_PORT)

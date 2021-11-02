@@ -53,3 +53,4 @@ show_img(img)
 img_list = split_img(img)
 
 show_img(img_list[0][2])
+

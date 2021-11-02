@@ -100,7 +100,7 @@ def create_ann_dict(annotations: List[Path]) -> Dict[str, List[int]]:
 def format_yolo_bbox(bbox: List[int], img_dims=(300, 300)) -> List[float]:
     x_mid = ((bbox[0] + bbox[2]) / 2) / img_dims[0]
     y_mid = ((bbox[1] + bbox[3]) / 2) / img_dims[1]
-    width = (bbox[2] - bbox[2]) / img_dims[0]
+    width = (bbox[2] - bbox[0]) / img_dims[0]
     height = (bbox[3] - bbox[1]) / img_dims[1]
     return [x_mid, y_mid, width, height]
 

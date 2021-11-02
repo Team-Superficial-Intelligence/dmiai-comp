@@ -3,7 +3,7 @@
   - color1 + color1 = Color 2
   - Color2 + Color2 = Color 1
   - Color1 + Color2 = Color 2
-- (Dots 2x.) Rotation 1
+- (Dots 2x.) Flip 1
   - Flip First picture on both axis's
   - Ignore Picture 2
 - (Figure in square) Movement 1

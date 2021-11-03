@@ -1,13 +1,10 @@
-"""
-Formats the iq-images into a list of list of images, with sublists being rows and images being figures
-"""
 import cv2
 import numpy as np
 import itertools
 from pathlib import Path
 from typing import List
 
-IMG_DIR = Path("../../example-data/iq-test/dmi-api-test/")
+IMG_DIR = Path("../../example-data/iq-test/dmi-api-test")
 
 
 def read_img(path: Path):

@@ -4,6 +4,10 @@ import numpy as np
 import re
 from skimage.metrics import structural_similarity as compare_ssim
 from pathlib import Path
+from typing import List
+
+
+IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
 
 
 def find_identifier(img_path):
@@ -55,13 +59,21 @@ def check_rotations(full_list, choices):
     return None
 
 
+def find_img_choices(img_path: Path) -> List[Path]:
+    identifier = find_identifier(img_path)
+    return list(IMG_PATH.glob(f"*{identifier}*choice*.png"))
+
+
+def find_img_files():
+    return list(IMG_PATH.glob("*image*.png"))
+
+
 if __name__ == "__main__":
-    IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
 
     img_files = list(IMG_PATH.glob("*image*.png"))
 
     img_path = img_files[4]
-    img_choices = list(IMG_PATH.glob(f"*{find_identifier(img_path)}*choice*"))
+    img_choices = find_img_choices(img_path)
 
     choices = [fii.read_img(f) for f in img_choices]
 

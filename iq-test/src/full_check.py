@@ -19,9 +19,9 @@ def check_shit(img_path):
     if bitxor_result:
         return bitxor_result
 
-    #    bitand_result = cc.check_bitand(img_list, choices)
-    #   if bitand_result:
-    #      return bitand_result
+    bitand_result = cc.check_bitand(img_list, choices)
+    if bitand_result:
+        return bitand_result
 
     return None
 

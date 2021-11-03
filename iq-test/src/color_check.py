@@ -35,14 +35,6 @@ def bitand(src1, src2):
     return cv2.bitwise_and(src1, src2)
 
 
-def deltaE(img1, img2, colorspace=cv2.COLOR_BGR2LAB):
-    # Convert BGR images to specified colorspace
-    img1 = cv2.cvtColor(img1, colorspace)
-    img2 = cv2.cvtColor(img2, colorspace)
-    # compute the Euclidean distance with pixels of two images
-    return np.mean(np.sqrt(np.sum((img1 - img2) ** 2, axis=-1)) / 255.0)
-
-
 def check_bitand(img_list, choices):
     test_list = img_list[:3]
     final_imgs = img_list[3][:2]
@@ -101,78 +93,76 @@ def funky_func(src):
     return to_gray(test_img)
 
 
-img_paths = rc.find_img_files()
-for i, img_path in enumerate(img_paths):
-    choice_paths = rc.find_img_choices(img_path)
-    choices = [fii.read_img(f) for f in choice_paths]
-    img = fii.read_img(img_path)
-    img_list = fii.split_img(img)
-    print(check_bitand(img_list, choices))
+if __name__ == "__main__":
+    img_paths = rc.find_img_files()
+    for i, img_path in enumerate(img_paths):
+        choice_paths = rc.find_img_choices(img_path)
+        choices = [fii.read_img(f) for f in choice_paths]
+        img = fii.read_img(img_path)
+        img_list = fii.split_img(img)
+        print(check_bitand(img_list, choices))
 
-np.logical_xor(np.array([1, 1, 0, 1]), np.array([0, 1, 0, 1]))
+    np.logical_xor(np.array([1, 1, 0, 1]), np.array([0, 1, 0, 1]))
 
-fii.show_img(img)
-choice = choices[0]
+    fii.show_img(img)
+    choice = choices[0]
 
-source1 = img_list[0][0]
-source2 = img_list[0][1]
-bitstuff = xor_func(source1, source2)
-[compare_ssim(bitstuff, choice, multichannel=True) for choice in choices]
-fii.show_img(xor_preprocess(choice))
-fii.show_img(bitstuff)
-choice
+    source1 = img_list[0][0]
+    source2 = img_list[0][1]
+    bitstuff = xor_func(source1, source2)
+    [compare_ssim(bitstuff, choice, multichannel=True) for choice in choices]
+    fii.show_img(xor_preprocess(choice))
+    fii.show_img(bitstuff)
+    choice
 
-fii.show_img(quantize_image(source1, clusters=2))
+    fii.show_img(quantize_image(source1, clusters=2))
 
+    src1 = funky_func(source1)
+    src2 = funky_func(source2)
+    bitstuff = cv2.bitwise_xor(src1, src2)
+    fii.show_img(bitstuff)
 
-src1 = funky_func(source1)
-src2 = funky_func(source2)
-bitstuff = cv2.bitwise_xor(src1, src2)
-fii.show_img(bitstuff)
+    testytest = funky_func(choice)
+    fii.show_img(bitstuff)
 
-testytest = funky_func(choice)
-fii.show_img(bitstuff)
+    fii.show_img(testy)
+    fii.show_img(test_img)
 
+    deltaE
+    hsvImg = cv2.cvtColor(choice, cv2.COLOR_BGR2HSV)
 
-fii.show_img(testy)
-fii.show_img(test_img)
+    # multiple by a factor to change the saturation
+    hsvImg[..., 1] = hsvImg[..., 1] * 1.2
 
-deltaE
-hsvImg = cv2.cvtColor(choice, cv2.COLOR_BGR2HSV)
+    image = cv2.cvtColor(hsvImg, cv2.COLOR_HSV2BGR)
+    fii.show_img(image)
 
-# multiple by a factor to change the saturation
-hsvImg[..., 1] = hsvImg[..., 1] * 1.2
+    fii.show_img(xor_func(source1, source1))
+    cv2.COLORBGR2
+    fii.show_img(bitstuff)
 
+    kernel = np.ones((5, 5), np.uint8)
+    fii.show_img(cv2.dilate(choices[1], kernel, iterations=1))
 
-image = cv2.cvtColor(hsvImg, cv2.COLOR_HSV2BGR)
-fii.show_img(image)
+    for choice in choices:
+        fii.show_img(choice)
+    fii.show_img(bitstuff)
+    target = img_list[0][2]
 
-fii.show_img(xor_func(source1, source1))
-cv2.COLORBGR2
-fii.show_img(bitstuff)
+    gray = cv2.cvtColor(choice, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (7, 7), 0.5)
+    edge = cv2.Canny(blur, 0, 50, 3)
 
-kernel = np.ones((5, 5), np.uint8)
-fii.show_img(cv2.dilate(choices[1], kernel, iterations=1))
+    contours, hierarchy = cv2.findContours(
+        edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
 
-for choice in choices:
-    fii.show_img(choice)
-fii.show_img(bitstuff)
-target = img_list[0][2]
+    for contour, hier in zip(contours, hierarchy):
+        (x, y, w, h) = cv2.boundingRect(contour)
+        rect = choice[y : y + h, x : x + w]
 
+        # rect = cv2.rectangle(choice, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-gray = cv2.cvtColor(choice, cv2.COLOR_BGR2GRAY)
-blur = cv2.GaussianBlur(gray, (7, 7), 0.5)
-edge = cv2.Canny(blur, 0, 50, 3)
-
-contours, hierarchy = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-
-for contour, hier in zip(contours, hierarchy):
-    (x, y, w, h) = cv2.boundingRect(contour)
-    rect = choice[y : y + h, x : x + w]
-
-    # rect = cv2.rectangle(choice, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-div = 4
-quantized = choice // div * div + div // 2
+    div = 4
+    quantized = choice // div * div + div // 2
 

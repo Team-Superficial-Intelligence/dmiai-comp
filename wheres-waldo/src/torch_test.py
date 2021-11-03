@@ -26,7 +26,7 @@ def draw_yolo_bbox(img, yolo_bbox):
     return cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 0), 2)
 
 
-model_path = Path("../../../yolov5/runs/train/exp6/weights/best.pt")
+model_path = Path("../../../yolov5/legend_best.pt")
 data_path = Path("../../../datasets/waldo/images/train")
 label_path = data_path.parent.parent / "labels" / "train"
 model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path)
@@ -34,9 +34,9 @@ model = torch.hub.load("ultralytics/yolov5", "custom", path=model_path)
 
 test_img = next(data_path.glob("*.jpg"))
 
-results = model(list(data_path.glob("*.jpg")))
+results = model(list(data_path.glob("*.jpg"))[1])
 
-
+results.pred
 test_name = test_img.name[:-4]
 
 test_box = next(label_path.glob(f"*{test_name}*"))

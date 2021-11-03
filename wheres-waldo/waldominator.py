@@ -61,15 +61,15 @@ def eval_pred(x, y, full_bbox):
     return x_good and y_good
 
 
-def predict(img):
-    img_list, pos = split_img_matrix(test_img2)
+def predict(img: np.ndarray) -> Tuple[float, float]:
+    img_list, pos = split_img_matrix(img)
     output = MODEL(img_list)
     idx = find_tensor_pos(output.pred)
     pos_final = pos[idx]
     try:
-        x, y = tensor_to_xy(output.pred[idx], pos)
+        return tensor_to_xy(output.pred[idx], pos_final)
     except IndexError:
-        return 750, 750
+        return 750.0, 750.0
 
 
 if __name__ == "__main__":

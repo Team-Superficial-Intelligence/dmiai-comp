@@ -1,4 +1,5 @@
 import format_iq_imgs as fii
+import numpy as np
 import cv2
 from pathlib import Path
 import os
@@ -8,22 +9,34 @@ IMG_DIR = Path("../../example-data/iq-test/dmi-api-test")
 IMG_DIR.exists()
 
 img_files = list(IMG_DIR.glob("*image*.png"))
-test_img = fii.read_img(img_files[5])
+test_img = fii.read_img(img_files[6])
 
 image_list = fii.split_img(test_img)
 
-# Show One picture
-SigleImageLookup = image_list[0][0]
-cv2.imshow("Image",SigleImageLookup)
+#Addition
+Pic1 = image_list[0][0]
+Pic2 = image_list[0][1]
+### Bitwise
+bitwise_addition = cv2.bitwise_and(Pic1, Pic2)
+### Print
+cv2.imshow("Bitwise_Addition",bitwise_addition)
 cv2.waitKey()
 cv2.destroyAllWindows() 
 
+### Erode
+kernel = np.ones((5,5),np.uint8)
+Pic1 = cv2.erode(Pic1,kernel,iterations=3)
+Pic2 = cv2.erode(Pic2,kernel,iterations=3)
+### BLUR
+Pi1 = cv2.GaussianBlur(Pic1,(7,7),cv2.BORDER_DEFAULT)
+Pic2 = cv2.GaussianBlur(Pic2,(7,7),cv2.BORDER_DEFAULT)
+### Greyscale
+Pic1 = cv2.cvtColor(Pic1, cv2.COLOR_RGBA2GRAY)
+Pic2 = cv2.cvtColor(Pic2, cv2.COLOR_RGBA2GRAY)
 
-#Addition
-Pic1 = image_list[0][0]
-Pic2 = image_list[XX][XX]
-bitwise_addition = cv2.bitwise_xor(Pic1, Pic2)
-cv2.imshow("Bitwise_Addition",bitwise_addition)
+# Show One picture
+SigleImageLookup = image_list[0][1]
+cv2.imshow("Image",SigleImageLookup)
 cv2.waitKey()
 cv2.destroyAllWindows() 
 

@@ -1,6 +1,3 @@
-"""
-Formats the iq-images into a list of list of images, with sublists being rows and images being figures
-"""
 import cv2
 import numpy as np
 import itertools

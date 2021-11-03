@@ -1,5 +1,6 @@
 from typing import List, Tuple
 from pathlib import Path
+from PIL import Image
 import cv2
 import torch
 import itertools
@@ -28,8 +29,8 @@ def crop_img(img: np.ndarray, pos: Tuple[int], img_size=(300, 300)) -> np.ndarra
     return img[y : y + img_size[0], x : x + img_size[1]]
 
 
-def split_img_matrix(input_img: np.ndarray, img_size=(300, 300)) -> List[np.ndarray]:
-    img = PIL_to_cv2(input_img)
+def split_img_matrix(input_img: Image, img_size=(300, 300)) -> List[np.ndarray]:
+    img = np.array(input_img)
     width = int(img.shape[1] / img_size[1])
     height = int(img.shape[0] / img_size[0])
     positions = list(itertools.product(range(height), range(width)))
@@ -76,11 +77,14 @@ def plot_circle(x, y, img):
     return cv2.circle(img.copy(), (int(x), int(y)), radius=5, color=(0, 255, 0))
 
 
+# Random shit, don't mind
 if __name__ == "__main__":
     test_img = cv2.imread(str(TEST_PATH))
     show_img(test_img)
 
-    x, y = predict(test_img)
+    test_image = Image.open(TEST_PATH).convert("RGB")
+    PIL_to_cv2
+    x, y = predict(test_image)
 
     cv2.imwrite("test_img.png", plot_circle(x, y, test_img))
 

@@ -72,20 +72,17 @@ def predict(img: np.ndarray) -> Tuple[float, float]:
         return 750.0, 750.0
 
 
+def plot_circle(x, y, img):
+    return cv2.circle(img.copy(), (int(x), int(y)), radius=5, color=(0, 255, 0))
+
+
 if __name__ == "__main__":
     test_img = cv2.imread(str(TEST_PATH))
     show_img(test_img)
-    img_list, positions = split_img_matrix(test_img)
 
-    model_output = MODEL(img_list)
+    x, y = predict(test_img)
 
-    win_idx = next(i for i, pred in enumerate(model_output.pred) if pred.nelement() > 0)
-    bbox = model_output.pred[win_idx]
-    position = positions[win_idx]
-    x, y = tensor_to_xy(bbox, position)
-    TEST_PATH
-
-    show_img(img_list[win_idx])
+    cv2.imwrite("test_img.png", plot_circle(x, y, test_img))
 
     new_test = cv2.imread(
         str("C:\\Users\\jhr\\datasets1\\waldo\\images\\train\\00DUOAF6.jpg")

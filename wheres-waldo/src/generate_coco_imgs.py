@@ -14,7 +14,8 @@ import imgaug.augmenters as iaa
 TRAIN_DIR = Path("../../example-data/wheres-waldo")
 IMG_DIR = TRAIN_DIR / "images"
 ANN_DIR = IMG_DIR / "annotations"
-DATA_DIR = Path.home() / "datasets" / "waldo"
+DATA_DIR = Path.home() / "datasets1" / "waldo"
+assert DATA_DIR.exists()
 NEW_IMG_DIR = DATA_DIR / "images"
 TRAIN_IMG_DIR = NEW_IMG_DIR / "train"
 VAL_IMG_DIR = NEW_IMG_DIR / "val"
@@ -126,9 +127,16 @@ def write_text(s: str, file_path: Path):
 
 
 def augmentation_pipeline():
-    return iaa.Sequential(
-        [iaa.Fliplr(0.5), iaa.GaussianBlur((0, 3.0)), iaa.Dropout(p=0.01)],
-    )
+    return iaa.Sequential([iaa.Fliplr(0.5), iaa.GaussianBlur((0, 2.5))],)
+
+
+def move_to_val(fileid):
+    old_img_name = TRAIN_IMG_DIR / f"{fileid}.jpg"
+    new_img_name = VAL_IMG_DIR / f"{fileid}.jpg"
+    old_lab_name = TRAIN_LABEL_DIR / f"{fileid}.txt"
+    new_lab_name = VAL_LABEL_DIR / f"{fileid}.txt"
+    old_img_name.rename(new_img_name)
+    old_lab_name.rename(new_lab_name)
 
 
 if __name__ == "__main__":
@@ -137,9 +145,14 @@ if __name__ == "__main__":
 
     seq = augmentation_pipeline()
     N = 100  # Augs per img
-    train_paths = random.choices(list(ann_dict.keys()), k=17)
+    train_paths = list(ann_dict.keys())
     train_paths = [x for x in train_paths if x != "21.jpg"]
-    train_dict = [create_waldo_crop(img_name, ann_dict) for img_name in train_paths]
+
+    train_dict = [
+        create_waldo_crop(img_name, ann_dict)
+        for img_name in train_paths
+        for i in range(5)
+    ]
     train_imgs = [x[0] for x in train_dict]
     train_boxes = [
         [ia.BoundingBox(x1=box[1][0], y1=box[1][1], x2=box[1][2], y2=box[1][3])]
@@ -167,28 +180,19 @@ if __name__ == "__main__":
         write_text(format_yolo_string(proper_box), label_path)
 
     print("generating empty imgs!")
-    for i in range(500):
+    for i in range(1000):
         random_img = random.choice(list(ann_dict.keys()))
         random_name = create_random_id()
         img = create_empty_crop(random_img, ann_dict)
         img_path = TRAIN_IMG_DIR / f"{random_name}.jpg"
         cv2.imwrite(str(img_path), img)
 
-    val_idx = int(len(ann_dict) * 0.8)
-    for i, (img_name, bbox) in enumerate(ann_dict.items()):
-        if img_name == "21.jpg":
+    # Finally, create validation set (randomly move 500)
+    all_ids = list(TRAIN_IMG_DIR.glob("*.jpg"))
+    all_ids = [file.name[:-4] for file in all_ids]
+    val_ids = random.choices(all_ids, k=500)
+    for val_id in val_ids:
+        try:
+            move_to_val(val_id)
+        except FileNotFoundError:
             continue
-        for j in range(3):
-            waldo_img, waldo_bbox = create_waldo_crop(img_name, ann_dict)
-            yolo_bbox = format_yolo_bbox(waldo_bbox)
-            file_id = create_random_id()
-            if i <= val_idx:
-                write_text(
-                    format_yolo_string(yolo_bbox), TRAIN_LABEL_DIR / f"{file_id}.txt"
-                )
-                cv2.imwrite(str(TRAIN_IMG_DIR / f"{file_id}.jpg"), waldo_img)
-            else:
-                write_text(
-                    format_yolo_string(yolo_bbox), VAL_LABEL_DIR / f"{file_id}.txt"
-                )
-                cv2.imwrite(str(VAL_IMG_DIR / f"{file_id}.jpg"), waldo_img)

@@ -13,7 +13,7 @@ test_img = fii.read_img(img_files[0])
 image_list = fii.split_img(test_img)
 
 # FREEZES
-##cv2.imshow("Image",image_list[0][0])
+cv2.imshow("Image",image_list[0][0])
 ##cv2.waitKey()
 ##cv2.destroyAllWindows() 
 
@@ -33,9 +33,24 @@ img_rotate_180_clockwise = cv2.rotate(image_list[0][0], cv2.ROTATE_180_CLOCKWISE
 ## Find red 
 
 ## IDEAS
-# Greyscale
+### Greyscale
 cv2.cvtColor(img, cv2.COLOR_RGBA2GRAY)
-# Dialate features after having "Eroded" and erased other
+### Dialate features after having "Eroded" and erased other
 kernel = np.ones((5,5),np.uint8)
-dialated = cv2.dilate(image,kernel,iterations=5)
 eroded = cv2.erode(dialated,kernel,iterations=1)
+dialated = cv2.dilate(image,kernel,iterations=5)
+
+### Edge cascade
+blur = cv2.GaussianBlur(img,(7,7),cv.BORDER_DEFAULT)
+canny = cv.Canny(blur,125,175
+
+## Softness
+circle = cv.circle(blank.copy(),(200,200),200,255,-1)
+small_circlecv.circle(blank.copy(),(200,200),100,255,-1)
+Triangle = cv.triangle(blank.copy(),(200,200),200,255,-1)
+Triangle = cv.rectangle(blank.copy(),(30,30),(370,370),255,-1)
+## Combine to soften
+bitwise_and = cv2.bitwise_and(img, circle)
+
+#Addition
+bitwise_addition = cv2.bitwise_xor(img, img2)

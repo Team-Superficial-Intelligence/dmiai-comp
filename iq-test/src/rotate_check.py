@@ -11,27 +11,6 @@ def find_identifier(img_path):
     return re.match(r"rq_\d+", img_name).group(0)
 
 
-def check90clockwise(source_img, target_img):
-    rotate_img = cv2.rotate(source_img, cv2.ROTATE_90_CLOCKWISE)
-    sim_score = compare_ssim(rotate_img, target_img, multichannel=True)
-    if sim_score > 0.9:
-        return True
-
-
-def check90counterclockwise(source_img, target_img):
-    rotate_img = cv2.rotate(source_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    sim_score = compare_ssim(rotate_img, target_img, multichannel=True)
-    if sim_score > 0.9:
-        return True
-
-
-def check180(source_img, target_img):
-    rotate_img = cv2.rotate(source_img, cv2.ROTATE_180)
-    sim_score = compare_ssim(rotate_img, target_img, multichannel=True)
-    if sim_score > 0.9:
-        return True
-
-
 def rotate90clockwise(img):
     return cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
 
@@ -46,7 +25,7 @@ def rotate180(img):
 
 def check_similarity(source_img, target_img, func):
     new_img = func(source_img)
-    return compare_ssim(new_img, target_img, multichannel=True) > 0.9
+    return compare_ssim(new_img, target_img, multichannel=True) > 0.87
 
 
 def find_best_match(source_img, choices, func):
@@ -57,40 +36,40 @@ def find_best_match(source_img, choices, func):
     return np.argmax(sim_scores)
 
 
-def check_rotations(full_list, choices):
+def check_rotation(full_list, choices, func):
     test_cases = full_list[:3]
     final_img = full_list[3][0]
     # Check 90 Counter
-    case1 = all(
-        check_similarity(lst[0], lst[2], rotate90counterclockwise) for lst in test_cases
-    )
-    if case1:
-        return find_best_match(final_img, choices, rotate90counterclockwise)
-    # Check 90
-    case2 = all(
-        check_similarity(lst[0], lst[2], rotate90clockwise) for lst in test_cases
-    )
-    if case2:
-        return find_best_match(final_img, choices, rotate90clockwise)
-    case3 = all(check_similarity(lst[0], lst[2], rotate180) for lst in test_cases)
-    if case3:
-        return find_best_match(final_img, choices, rotate180)
+    case = all(check_similarity(lst[0], lst[2], func) for lst in test_cases)
+    if case:
+        return find_best_match(final_img, choices, func)
     return None
 
 
-IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
+def check_rotations(full_list, choices):
+    func_list = [rotate90clockwise, rotate90counterclockwise, rotate180]
+    for func in func_list:
+        result = check_rotation(full_list, choices, func)
+        if result:
+            return result
+    return None
 
-img_files = list(IMG_PATH.glob("*image*.png"))
 
-img_path = img_files[2]
-img_choices = list(IMG_PATH.glob(f"*{find_identifier(img_path)}*choice*"))
+if __name__ == "__main__":
+    IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
 
-choices = [fii.read_img(f) for f in img_choices]
+    img_files = list(IMG_PATH.glob("*image*.png"))
 
-img = fii.read_img(img_path)
-fii.show_img(img)
+    img_path = img_files[4]
+    img_choices = list(IMG_PATH.glob(f"*{find_identifier(img_path)}*choice*"))
 
-img_list = fii.split_img(img)
-winner_idx = check_rotations(img_list, choices)
+    choices = [fii.read_img(f) for f in img_choices]
 
-fii.show_img(choices[winner_idx])
+    img = fii.read_img(img_path)
+    fii.show_img(img)
+
+    img_list = fii.split_img(img)
+    full_list = img_list
+    winner_idx = check_rotations(img_list, choices)
+
+    fii.show_img(choices[winner_idx])

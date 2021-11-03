@@ -13,7 +13,8 @@ test_img = fii.read_img(img_files[0])
 image_list = fii.split_img(test_img)
 
 cv2.imshow("Image",image_list[0][0])
-cv2.destroyAllWindows(5)
+cv2.waitKey()
+cv2.destroyAllWindows() 
 
 # Rotate images 45 degrees
 img_rotate_45_clockwise = cv2.rotate(image_list[0][0], cv2.ROTATE_45_CLOCKWISE)

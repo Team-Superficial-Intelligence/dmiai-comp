@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 import itertools
 from pathlib import Path
 
-TRAIN_DIR = Path("../../example-data/wheres-waldo")
+TRAIN_DIR = Path("../example-data/wheres-waldo")
 IMG_DIR = TRAIN_DIR / "images"
 ANN_DIR = IMG_DIR / "annotations"
 

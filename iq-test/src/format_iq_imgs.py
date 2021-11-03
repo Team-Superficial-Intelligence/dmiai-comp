@@ -4,7 +4,7 @@ import itertools
 from pathlib import Path
 from typing import List
 
-IMG_DIR = Path("../../example-data/iq-test/dmi-api-test/")
+IMG_DIR = Path("../../example-data/iq-test/dmi-api-test")
 
 
 def read_img(path: Path):

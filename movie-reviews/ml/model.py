@@ -12,7 +12,7 @@ from fastai import *
 from fastai.text.core import BaseTokenizer, Tokenizer
 from fastai.text.data import *
 from fastai.callback import *
-from transformers import PreTrainedTokenizer, XLNetTokenizer
+from transformers import PreTrainedTokenizer, XLNetTokenizer, XLNetConfig
 
 
 class FastAiTokenizer(BaseTokenizer):

@@ -1,5 +1,5 @@
 from ml.model import Model
-from ml.trainer import normalize_text
+#from ml.trainer import normalize_text
 
 
 class Predictor:

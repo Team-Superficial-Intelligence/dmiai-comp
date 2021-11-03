@@ -5,7 +5,7 @@ from ml.trainer import Trainer
 class Toolkit:
     def test(self):
         t = Trainer()
-        return t.train()
+        return t.train2()
 
         #m = Model()
 

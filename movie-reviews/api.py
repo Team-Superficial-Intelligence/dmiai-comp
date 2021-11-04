@@ -47,7 +47,10 @@ def predict(request: PredictRequest) -> PredictResponse:
     # rating will be associated with the review at the same index in the request list.
     req_group = str(time.time_ns())
     f = open("./data/req_{}.json".format(req_group), "w")
+    tstart = time.time()
     ratings = predict_stars(model, request.reviews)
+    tend = time.time()
+    print("time for 2 predictions:" + str(tend - tstart))
     json.dump(ratings, f)
     f.close()
     return PredictResponse(ratings=ratings)

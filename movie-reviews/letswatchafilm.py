@@ -1,3 +1,4 @@
+import base64
 from warnings import simplefilter
 import numpy as np
 from simpletransformers.classification import ClassificationModel, ClassificationArgs
@@ -8,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from tqdm.utils import SimpleTextIOWrapper
 from transformers import RobertaTokenizer, RobertaTokenizerFast
 from scipy.special import softmax
+import time
 
 logging.basicConfig(level=logging.INFO)
 transformers_logger = logging.getLogger("transformers")
@@ -21,14 +23,23 @@ def load_model():
                                tokenizer_type=RobertaTokenizerFast)
 
 
-def load_data():
-    df = pd.read_csv('./data/imdb/imdb_sup.csv.zip', header=None, skiprows=1)
-    del df[2]
-    # ratings 5 and 6 were missing because sentiments
-    df.loc[df[1] > 6, 1] -= 2
-    # index start from 0
+def load_data(src='imdb_sup'):
+    ext = 'gz'
+    if src == 'imdb_sup':
+        ext = 'zip'
+    df = pd.read_csv('./data/{}.csv.{}'.format(src, ext),
+                     header=None,
+                     skiprows=1)
+    if src == 'imdb_sup':
+        del df[2]
+        # ratings 5 and 6 were missing because sentiments
+        df.loc[df[1] > 6, 1] -= 2
+        # index start from 0
+
     df[1] -= 1
+
     df.columns = ["text", "labels"]
+
     return df
 
 
@@ -57,48 +68,29 @@ def model_config(m):
     return conf_opts[m]
 
 
-def main():
-    # model = ClassificationModel("roberta", "outputs-roberta1")
-    # preds = model.predict([
-    #     "So much talent. So little result.",
-    #     "Really disappointed at yet another dreadful script for one of my favourite books.  Badly cast, stupid additions, (a stray dog???) really just hopeless.   Is no-one brave enough to stick to the story, the characters, and wonderful dialogue from this rich and beautiful story book?",
-    #     "I really love Christiana Ricci, but this is a low budget dud. The story is completely nonsensical, the CGI effects would have been cheesey in 1998 and the writing is just abismal. C Ric is charming and flawless as always, but that's all that this cinematic mess has going for it.",
-    #     "Could be a good movie - but it got knocked out in the 50th minute - better things to do with my life ... ",
-    #     "feels like they were trying so hard to make a second equalizer they didn't think of good story or characters before they did it. No where near as good as first movie",
-    #     "Being a huge metal fan, I was excited about this movie and thought they really couldnt do much to turn me off from liking it. I was wrong. The movie is campy as hell, the dialogue is laughable about 80% of the time and the plot is hardly developed. The script writer shouldve been fired. Andy Biersack's acting shows signs of being solid in the future but ultimately hes only there to draw in a fan girl audience and the movie does nothing to hide that fact. The shining element of the movie are Remington Leith's vocal parts in my opinion. If you want a cheesy metal movie you can laugh at then here it is but if you want a deep gritty portrayal of the scene and music industry youll be mad at yourself for thinking this movie could deliver. Its not to be taken seriously which makes me think it did far more damage to the metal scene than good.",
-    #     "This film was doomed from the outset due to a deals for a dollar script."
-    # ])
-    # logging.log(logging.INFO, str(preds))
-    # exit()
-    # Preparing train data
+def main(src='imdb_sup'):
 
-    train_df, eval_df = train_test_split(load_data(), train_size=0.5)
+    train_df, eval_df = train_test_split(load_data(src), train_size=0.5)
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
-
+    if src == 'imdb_sup':
+        n_labels = 8
+        epochs = 5
+    elif src == 'amazon':
+        n_labels = 5
+        epochs = 3
     # Optional model configuration
     # For xlnet large batch size max is 2
-    model_args = ClassificationArgs(num_train_epochs=5,
+    model_args = ClassificationArgs(num_train_epochs=epochs,
                                     overwrite_output_dir=True,
                                     train_batch_size=bs)
     # model_args.weight_decay = 0.01
     model = ClassificationModel(m,
                                 pt,
-                                num_labels=8,
+                                num_labels=n_labels,
                                 use_cuda=True,
                                 args=model_args,
                                 tokenizer_type=tt)
-    # Create a ClassificationModel
-    # model = ClassificationModel('roberta',
-    #                             'roberta-base',
-    #                             num_labels=10,
-    #                             use_cuda=True,
-    #                             args=model_args)
-
-    # model = ClassificationModel('bert',
-    #                             'bert-base-cased',
-    #                             num_labels=10,
-    #                             args=model_args)
 
     # Train the model
     model.train_model(train_df)
@@ -108,6 +100,20 @@ def main():
     # logging.log(logging.INFO, str(result))
     # logging.log(logging.INFO, str(model_outputs))
     # logging.log(logging.INFO, str(wrong_predictions))
+
+
+def train_more():
+    use_conf = 'dbert2'
+    m, pt, bs, tt = model_config(use_conf)
+
+    model_args = ClassificationArgs(num_train_epochs=5,
+                                    overwrite_output_dir=True,
+                                    train_batch_size=bs)
+
+    model = ClassificationModel("distilbert",
+                                "outputs-distilbert2",
+                                tokenizer_type=RobertaTokenizerFast)
+    train_df, eval_df = train_test_split(load_data(), train_size=0.5)
 
 
 def eval_local():
@@ -139,23 +145,21 @@ def predict_stars(model, to_predict):
 
 def test_predictions():
     model = ClassificationModel("distilbert",
-                                "outputs",
+                                "outputs-distilbert2",
                                 tokenizer_type=RobertaTokenizerFast)
     preds, raw_outputs = model.predict([
-        "So much talent. So little result.",
-        "Really disappointed at yet another dreadful script for one of my favourite books.  Badly cast, stupid additions, (a stray dog???) really just hopeless.   Is no-one brave enough to stick to the story, the characters, and wonderful dialogue from this rich and beautiful story book?",
-        "I really love Christiana Ricci, but this is a low budget dud. The story is completely nonsensical, the CGI effects would have been cheesey in 1998 and the writing is just abismal. C Ric is charming and flawless as always, but that's all that this cinematic mess has going for it.",
-        "Could be a good movie - but it got knocked out in the 50th minute - better things to do with my life ... ",
-        "feels like they were trying so hard to make a second equalizer they didn't think of good story or characters before they did it. No where near as good as first movie",
-        "Being a huge metal fan, I was excited about this movie and thought they really couldnt do much to turn me off from liking it. I was wrong. The movie is campy as hell, the dialogue is laughable about 80% of the time and the plot is hardly developed. The script writer shouldve been fired. Andy Biersack's acting shows signs of being solid in the future but ultimately hes only there to draw in a fan girl audience and the movie does nothing to hide that fact. The shining element of the movie are Remington Leith's vocal parts in my opinion. If you want a cheesy metal movie you can laugh at then here it is but if you want a deep gritty portrayal of the scene and music industry youll be mad at yourself for thinking this movie could deliver. Its not to be taken seriously which makes me think it did far more damage to the metal scene than good.",
-        "This film was doomed from the outset due to a deals for a dollar script."
+        "This is a shit movie",
+        "this is a great movie",
     ])
-
-    logging.log(logging.INFO, str(probabilities))
-
-    logging.log(logging.INFO, str(probs_altered))
+    tstart = time.time()
+    preds, raw_outputs = model.predict([
+        "This is a shit movie",
+        "this is a great movie",
+    ])
+    tend = time.time()
+    logging.log(logging.INFO, "time for 2 predictions:" + str(tend - tstart))
 
 
 if __name__ == "__main__":
-    test_predictions()
-    # main()
+    # test_predictions()
+    main('amazon')

@@ -15,20 +15,22 @@ def check_shit(img_path):
 
     rotation_result = rc.check_rotations(img_list, choices)
     if rotation_result is not None:
+        print("it's a rotation!")
         return rotation_result
 
     bitxor_result = cc.check_xor(img_list, choices)
     if bitxor_result is not None:
+        print("colour funk going on!")
         return bitxor_result
 
     bitand_result = cc.check_bitand(img_list, choices)
     if bitand_result is not None:
+        print("bitand galore!")
         return bitand_result
-
+    print("let's go random!")
     return random.choice(range(len(choices)))
 
 
 img_paths = rc.find_img_files()
 for img_path in img_paths:
-    img_path = img_paths[0]
     print(check_shit(img_path))

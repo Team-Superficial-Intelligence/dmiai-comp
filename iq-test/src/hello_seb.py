@@ -23,23 +23,32 @@ image_list = fii.split_img(test_img)
 image = image_list[0][0]
 
 # Convert BGR to HSV
-hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
-# define range of red color in HSV
-lower_red = np.array([0, 10, 120])
-upper_red = np.array([15, 255, 255])
-# Thresholding and getting contours from the image
-mask = cv.inRange (hsv, lower_red, upper_red)
-_, contours, _ = cv.findContours(mask.copy(),
-                    cv.RETR_TREE,
-                    cv.CHAIN_APPROX_SIMPLE)[-2]
+#hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+# https://answers.opencv.org/question/229620/drawing-a-rectangle-around-the-red-color-region/
 
-if len(contours) > 0:
-    red_area = max(contours, key=cv.contourArea)
-    x, y, w, h = cv.boundingRect(red_area)
-    cv.rectangle(frame,(x, y),(x+w, y+h),(0, 0, 255), 2)
+# red color boundaries [B, G, R]
+lower = [0, 0, 50]
+upper = [30, 30, 200]
 
-cv.imshow('mask', mask)
+lower = np.array(lower, dtype="uint8")
+upper = np.array(upper, dtype="uint8")
 
+mask = cv.inRange(image, lower, upper)
+output = cv.bitwise_and(image, image, mask=mask)
+
+kernel = np.ones((5,5),np.uint8)
+output = cv.dilate(output, kernel, iterations=3)
+
+# Rotate Triangle
+# grab the dimensions of the image and calculate the center of the
+# image
+(h, w) = output.shape[:2]
+(cX, cY) = (w // 2, h // 2)
+# rotate our output image by 144 degrees around the center of the image
+M = cv.getRotationMatrix2D((cX, cY), 144, 1.0)
+rotated = cv.warpAffine(output, M, (w, h))
+cv.imshow("Rotated by 144 Degrees", rotated)
+cv.waitKey(0)
 
 
 # rotate around middle

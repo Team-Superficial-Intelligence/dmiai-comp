@@ -1,18 +1,20 @@
+import base64
 import random
 import numpy as np
 import cv2
 from typing import List
 
-import format_iq_imgs as fii
-import color_check as cc
-import rotate_check as rc
+import shit_checker.format_iq_imgs as fii
+import shit_checker.color_check as cc
+import shit_checker.rotate_check as rc
 
 # import red_dot_check as rd
 # import rounding_check as ro
 
 
 def base64_to_cv2(img_string: str) -> np.array:
-    nparr = np.fromstring(img_string.decode("base64"), np.uint8)
+
+    nparr = np.fromstring(base64.b64decode(img_string), np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return img
 

@@ -1,5 +1,5 @@
-import format_iq_imgs as fii
-import rotate_check as rc
+import shit_checker.format_iq_imgs as fii
+import shit_checker.rotate_check as rc
 import cv2
 import numpy as np
 from pathlib import Path

@@ -1,11 +1,10 @@
-import format_iq_imgs as fii
+import shit_checker.format_iq_imgs as fii
 import cv2
 import numpy as np
 import re
 from skimage.metrics import structural_similarity as compare_ssim
 from pathlib import Path
 from typing import List
-
 
 IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
 
@@ -35,7 +34,8 @@ def check_similarity(source_img, target_img, func):
 def find_best_match(source_img, choices, func):
     image_guess = func(source_img)
     sim_scores = [
-        compare_ssim(image_guess, choice, multichannel=True) for choice in choices
+        compare_ssim(image_guess, choice, multichannel=True)
+        for choice in choices
     ]
     return np.argmax(sim_scores)
 

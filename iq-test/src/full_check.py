@@ -1,6 +1,8 @@
 import format_iq_imgs as fii
 import color_check as cc
 import rotate_check as rc
+import red_dot_check as rd
+import rounding_check as ro
 
 img_paths = rc.find_img_files()
 

@@ -1,8 +1,6 @@
 import random
-import base64
 import numpy as np
 import cv2
-from PIL import Image
 from typing import List
 
 import format_iq_imgs as fii

@@ -10,12 +10,17 @@ from dtos.responses import PredictResponse
 from settings import Settings, load_env
 from static.render import render
 from utilities.utilities import get_uptime
-import random
-from ml.emily import Emily
 
-emily = Emily()
+# from ml.emily import Emily
+
+from letswatchafilm import load_model, predict_stars
+import json
+import time
+
+# emily = Emily()
 
 load_env()
+model = load_model()
 
 # --- Welcome to your Emily API! --- #
 # See the README for guides on how to test it.
@@ -34,20 +39,24 @@ middleware.cors.setup(app)
 
 @app.post('/api/predict', response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
-
+    # f = open("./data/req_1636029039417787700.json", "r")
+    # ratings = json.load(f)
     # You receive all reviews as plaintext in the request.
     # Return a list of predicted ratings between 1-5 (inclusive).
     # You must return the same number of ratings as there are reviews, and each
     # rating will be associated with the review at the same index in the request list.
-
-    ratings = [random.uniform(0.5, 5.0) for review in request.reviews]
+    req_group = str(time.time_ns())
+    f = open("./data/req_{}.json".format(req_group), "w")
+    ratings = predict_stars(model, request.reviews)
+    json.dump(ratings, f)
+    f.close()
     return PredictResponse(ratings=ratings)
 
 
-@app.get('/superfuntime')
-def superfuntime():
-    tok = emily.superfuntime()
-    return HTMLResponse(str(tok))
+# @app.get('/superfuntime')
+# def superfuntime():
+#     tok = emily.superfuntime()
+#     return HTMLResponse(str(tok))
 
 
 @app.get('/api')

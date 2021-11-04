@@ -1,3 +1,4 @@
+import walbrute
 
 import uvicorn
 from fastapi import FastAPI, File
@@ -33,22 +34,21 @@ middleware.logging.setup(app)
 middleware.cors.setup(app)
 
 
-@app.post('/api/predict', response_model=PredictResponse)
+@app.post("/api/predict", response_model=PredictResponse)
 def predict(request: PredictRequest = File(...)) -> PredictResponse:
 
     # This is the Where's Waldo image as an RGB matrix
     image = Image.open(io.BytesIO(request.file.read())).convert("RGB")
 
+    loc, _ = walbrute.find_match(image, walbrute.TEMPLATES)
+
     # This is a dummy prediction - compute a real one
-    prediction = {
-        'x': 130,
-        'y': 850
-    }
+    prediction = {"x": loc[0], "y": loc[1]}
 
     return PredictResponse(**prediction)
 
 
-@app.get('/api')
+@app.get("/api")
 def hello():
     return {
         "uptime": get_uptime(),
@@ -56,21 +56,13 @@ def hello():
     }
 
 
-@app.get('/')
+@app.get("/")
 def index():
     return HTMLResponse(
-        render(
-            'static/index.html',
-            host=settings.HOST_IP,
-            port=settings.CONTAINER_PORT
-        )
+        render("static/index.html", host=settings.HOST_IP, port=settings.CONTAINER_PORT)
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    uvicorn.run(
-        'api:app',
-        host=settings.HOST_IP,
-        port=settings.CONTAINER_PORT
-    )
+    uvicorn.run("api:app", host=settings.HOST_IP, port=settings.CONTAINER_PORT)

@@ -10,53 +10,42 @@ from imutils import paths
 import argparse
 import imutils
 
+import matplotlib.pyplot as plt
+
 os.getcwd()
 IMG_DIR = Path("../../example-data/iq-test/dmi-api-test")
 IMG_DIR.exists()
 
 img_files = list(IMG_DIR.glob("*image*.png"))
-test_img = fii.read_img(img_files[8])
+test_img = fii.read_img(img_files[0])
 image_list = fii.split_img(test_img)
 # Image to alter
 image = image_list[0][0]
-image.shape
-# Define Colors
-## define the list of boundaries
-boundaries = [
-	([0, 0, 50], [60, 60, 200])
-]
-## Function for colorfulness
-def image_colorfulness(image):
-    # split the image into its respective RGB components
-	(B, G, R) = cv.split(image.astype("float"))
-	# compute rg = R - G
-	rg = np.absolute(R - G)
-	# compute yb = 0.5 * (R + G) - B
-	yb = np.absolute(0.5 * (R + G) - B)
-	# compute the mean and standard deviation of both `rg` and `yb`
-	(rbMean, rbStd) = (np.mean(rg), np.std(rg))
-	(ybMean, ybStd) = (np.mean(yb), np.std(yb))
-	# combine the mean and standard deviations
-	stdRoot = np.sqrt((rbStd ** 2) + (ybStd ** 2))
-	meanRoot = np.sqrt((rbMean ** 2) + (ybMean ** 2))
-	# derive the "colorfulness" metric and return it
-	return stdRoot + (0.3 * meanRoot)
 
-# loop over the boundaries
-for (lower, upper) in boundaries:
-	# create NumPy arrays from the boundaries
-	lower = np.array(lower, dtype = "uint8")
-	upper = np.array(upper, dtype = "uint8")
-	# find the colors within the specified boundaries and apply
-	# the mask
-	mask = cv.inRange(image, lower, upper)
-	output = cv.bitwise_and(image, image, mask = mask)
+# Convert BGR to HSV
+hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+# define range of red color in HSV
+lower_red = np.array([0, 10, 120])
+upper_red = np.array([15, 255, 255])
+# Thresholding and getting contours from the image
+mask = cv.inRange (hsv, lower_red, upper_red)
+_, contours, _ = cv.findContours(mask.copy(),
+                    cv.RETR_TREE,
+                    cv.CHAIN_APPROX_SIMPLE)[-2]
 
-#Print Color Value
-C = image_colorfulness(output)
-C
+if len(contours) > 0:
+    red_area = max(contours, key=cv.contourArea)
+    x, y, w, h = cv.boundingRect(red_area)
+    cv.rectangle(frame,(x, y),(x+w, y+h),(0, 0, 255), 2)
+
+cv.imshow('mask', mask)
+
+
+
+# rotate around middle
+
 #Potentially print
-cv.imshow("Image",output)
+cv.imshow("Image",image)
 cv.waitKey()
 cv.destroyAllWindows() 
 
@@ -191,7 +180,7 @@ cv.destroyAllWindows()
 # Soften
 import format_iq_imgs as fii
 import numpy as np
-import cv2 as cv
+import cv as cv
 from pathlib import Path
 import os
 from PIL import Image
@@ -219,7 +208,7 @@ Combined = cv.bitwise_or(TestImg,Circle)
 # import the necessary packages
 import format_iq_imgs as fii
 import numpy as np
-import cv2 as cv
+import cv as cv
 from pathlib import Path
 import os
 from PIL import Image
@@ -241,7 +230,7 @@ image.shape
 # Define Colors
 ## define the list of boundaries
 boundaries = [
-	([0, 0, 50], [60, 60, 200])
+	([0, 100, 100], [60, 60, 200])
 ]
 ## Function for colorfulness
 def image_colorfulness(image):

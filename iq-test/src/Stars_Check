@@ -1,0 +1,24 @@
+import format_iq_imgs as fii
+import cv2 as cv
+import numpy as np
+import re
+from skimage.metrics import structural_similarity as compare_ssim
+from pathlib import Path
+from typing import List
+
+
+IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
+
+def find_identifier(img_path):
+    img_name = img_path.name
+    return re.match(r"rq_\d+", img_name).group(0)
+
+
+def rotate72clockwise(img):
+    return cv.rotate(img, cv.ROTATE_72_CLOCKWISE)
+
+def greyscale()
+
+def check_similarity(source_img, target_img, func):
+    new_img = func(source_img)
+    return compare_ssim(new_img, target_img, multichannel=True) > 0.87

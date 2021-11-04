@@ -21,7 +21,16 @@ from static.render import render
 from utilities.utilities import get_uptime
 import random
 
+<<<<<<< HEAD
 from pydantic import BaseSettings
+=======
+#### TEMP LOGGING ####
+import json
+import time
+#### /TEMP LOGGING ####
+
+load_env()
+>>>>>>> 4ec9aa41ca3692e2f33f922c6d838a3c4f99c367
 
 # --- Welcome to your Emily API! --- #
 # See the README for guides on how to test it.
@@ -74,12 +83,24 @@ def predict(request: PredictRequest) -> PredictResponse:
         s.agent.state
     )
 
+<<<<<<< HEAD
     r1 = (request.distance - prev_dist) / 100
     r2 = -10 if request.did_crash else 0
     reward = r1 + r2
     
     s.agent.memorize(s.agent.state, action, reward, next_state, request.did_crash)
     s.agent.state = next_state
+=======
+    #### TEMP LOGGING ####
+    req_group = str(time.time_ns())
+    f = open("/workspace/rq_{}.json".format(req_group), "w")
+    json.dump(request, f, default=repr)
+    f.close()
+    #### /TEMP LOGGING ####
+
+    print("Getting loop.")
+    # print(str(PredictRequest["sensors"]["left_side"]))
+>>>>>>> 4ec9aa41ca3692e2f33f922c6d838a3c4f99c367
 
 
     prev_dist = request.distance

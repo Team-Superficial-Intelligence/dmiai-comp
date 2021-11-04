@@ -1,0 +1,7 @@
+tasks:
+  - command: cd movie-reviews && python3 api.py -e ".prod.env"
+ports:
+  - port: 4242
+    onOpen: open-preview
+image:
+  file: .gitpod.Dockerfile

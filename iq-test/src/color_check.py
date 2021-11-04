@@ -35,18 +35,17 @@ def bitand(src1, src2):
     return cv2.bitwise_and(src1, src2)
 
 
+def bitand_list(img_list):
+    return [
+        compare_ssim(bitand(lst[0], lst[1]), lst[2], multichannel=True)
+        for lst in img_list
+    ]
+
+
 def check_bitand(img_list, choices):
     test_list = img_list[:3]
     final_imgs = img_list[3][:2]
-    crit = (
-        np.mean(
-            [
-                compare_ssim(bitand(lst[0], lst[1]), lst[2], multichannel=True)
-                for lst in test_list
-            ]
-        )
-        > 0.83
-    )
+    crit = np.mean(bitand_list(test_list)) > 0.83
     if crit:
         best_guess = bitand(final_imgs[0], final_imgs[1])
         return np.argmax(compare_ssim(best_guess, choice) for choice in choices)

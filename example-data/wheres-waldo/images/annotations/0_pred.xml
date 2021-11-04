@@ -1,0 +1,26 @@
+<annotation>
+	<folder>images</folder>
+	<filename>0_pred.png</filename>
+	<path>C:\Users\jhr\dmiai-comp\example-data\wheres-waldo\images\0_pred.png</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>1500</width>
+		<height>1500</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>waldo</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>63</xmin>
+			<ymin>6</ymin>
+			<xmax>104</xmax>
+			<ymax>62</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -1,16 +1,27 @@
 import random
+import base64
+import numpy as np
+import cv2
+from PIL import Image
+from typing import List
 
 import format_iq_imgs as fii
 import color_check as cc
 import rotate_check as rc
-import red_dot_check as rd
-import rounding_check as ro
+
+# import red_dot_check as rd
+# import rounding_check as ro
 
 
-def check_shit(img_path):
-    choice_paths = rc.find_img_choices(img_path)
-    choices = [fii.read_img(f) for f in choice_paths]
-    img = fii.read_img(img_path)
+def base64_to_cv2(img_string: str) -> np.array:
+    nparr = np.fromstring(img_string.decode("base64"), np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return img
+
+
+def check_shit(img_string: str, choice_list: List[str]):
+    img = base64_to_cv2(img_string)
+    choices = [base64_to_cv2(choice) for choice in choice_list]
     img_list = fii.split_img(img)
 
     rotation_result = rc.check_rotations(img_list, choices)
@@ -31,6 +42,6 @@ def check_shit(img_path):
     return random.choice(range(len(choices)))
 
 
-img_paths = rc.find_img_files()
-for img_path in img_paths:
-    print(check_shit(img_path))
+# img_paths = rc.find_img_files()
+# for img_path in img_paths:
+#    print(check_shit(img_path))

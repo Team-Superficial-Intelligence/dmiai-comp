@@ -64,8 +64,8 @@ def scrape_movie_ids() -> list:
 def get_movie_id_list() -> list:
     df = pd.read_csv(rt_movie_list_file)
 
-    movie_id_list = df['rotten_tomatoes_link'].squeeze().str.lstrip(
-        'm/').tolist()
+    movie_id_list = df['rotten_tomatoes_link'].squeeze().str.slice(
+        start=2).tolist()
     return movie_id_list
 
 

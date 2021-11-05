@@ -75,8 +75,10 @@ if __name__ == '__main__':
     movie_id_list = get_movie_id_list()
     processed_movie_list = get_processed_movies()
     random.shuffle(movie_id_list)
+    total_num_movies = len(movie_id_list)
     for movie_id in movie_id_list:
         if movie_id in processed_movie_list:
+            print('Movie {} already processed, skipping.'.format(movie_id))
             continue
         print('Scraping {}'.format(movie_id))
         reviews = get_movie_reviews(movie_id)
@@ -89,5 +91,5 @@ if __name__ == '__main__':
                 csv_writer.writerow([movie_id, review[0], review[1]])
         # save each time in case of crash
         save_processed_movie_list(processed_movie_list)
-        print('Saved {} reviews for {}. Total movies scraped: {}'.format(
-            n, movie_id, len(processed_movie_list)))
+        print('Saved {} reviews for {}. Total movies scraped: {}/{}'.format(
+            n, movie_id, len(processed_movie_list), total_num_movies))

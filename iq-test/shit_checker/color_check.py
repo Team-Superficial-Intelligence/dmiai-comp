@@ -8,6 +8,17 @@ from sklearn.cluster import MiniBatchKMeans
 from skimage.metrics import structural_similarity as compare_ssim
 
 
+# green color boundaries [B, G, R]
+green = (np.array([20, 100, 40]), np.array([120, 255, 140]))
+# Yellow color boundaries [B, G, R]
+yellow = (np.array([0, 100, 155]), np.array([100, 150, 255]))
+# Blue color boundaries [B, G, R]
+blue = (np.array([180, 160, 50]), np.array([210, 180, 85]))
+
+red = (np.array([0, 0, 50]), np.array([30, 30, 200]))
+BOUNDARIES = [green, yellow, blue, red]
+
+
 def to_gray(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -93,13 +104,15 @@ def funky_func(src):
 
 
 if __name__ == "__main__":
-    img_paths = rc.find_img_files()
-    for i, img_path in enumerate(img_paths):
-        choice_paths = rc.find_img_choices(img_path)
-        choices = [fii.read_img(f) for f in choice_paths]
-        img = fii.read_img(img_path)
-        img_list = fii.split_img(img)
-        print(check_bitand(img_list, choices))
+    IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
+    img_paths = rc.find_img_files(img_path=IMG_PATH)
+    img_path = img_paths[0]
+    img = fii.read_img(img_path)
+    img_list = fii.split_img(img)
+    test_img = img_list[0][0]
+    for boundry in BOUNDARIES:
+        mask = cv2.inRange(test_img, boundry[0], boundry[1])
+        print(np.sum(mask))
 
     np.logical_xor(np.array([1, 1, 0, 1]), np.array([0, 1, 0, 1]))
 

@@ -76,6 +76,7 @@ mask = np.dstack((mask, mask, mask))
 no_sky = cv2.bitwise_and(final_image, mask)
 
 fii.show_img(no_sky)
+
 # Blue color boundaries [B, G, R]
 lower = [180, 160, 50]
 upper = [210, 180, 85]

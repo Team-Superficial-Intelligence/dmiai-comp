@@ -5,6 +5,7 @@ from simpletransformers.classification import ClassificationModel, Classificatio
 from simpletransformers.config import global_args
 import pandas as pd
 import logging
+import sklearn
 from sklearn.model_selection import train_test_split
 from tqdm.utils import SimpleTextIOWrapper
 from transformers import RobertaTokenizer, RobertaTokenizerFast, GPT2TokenizerFast
@@ -108,13 +109,20 @@ def main(src='imdb_sup'):
         epochs = 5
     elif src == 'movie_reviews':
         n_labels = 10
-        epochs = 5
+        epochs = 50
 
     # Optional model configuration
     # For xlnet large batch size max is 2
     model_args = ClassificationArgs(num_train_epochs=epochs,
                                     overwrite_output_dir=True,
                                     train_batch_size=bs)
+    if src == 'movie_reviews':
+        model_args.use_early_stopping = True
+        model_args.early_stopping_delta = 0.01
+        model_args.early_stopping_metric = "mcc"
+        model_args.early_stopping_metric_minimize = False
+        model_args.early_stopping_patience = 5
+        model_args.evaluate_during_training_steps = 1000
     # model_args.weight_decay = 0.01
     model = MyClassificationModel(m,
                                   pt,
@@ -125,10 +133,11 @@ def main(src='imdb_sup'):
     if use_conf == 'dbert3':
         model.add_pad_token()
     # Train the model
-    model.train_model(train_df)
+    model.train_model(train_df, acc=sklearn.metrics.accuracy_score)
 
     # Evaluate the model
-    result, model_outputs, wrong_predictions = model.eval_model(eval_df)
+    result, model_outputs, wrong_predictions = model.eval_model(
+        eval_df, acc=sklearn.metrics.accuracy_score)
     # logging.log(logging.INFO, str(result))
     # logging.log(logging.INFO, str(model_outputs))
     # logging.log(logging.INFO, str(wrong_predictions))
@@ -179,8 +188,11 @@ def magic_predict_stars(model, to_predict):
 
 
 def predict_stars(model, to_predict):
-    stars, _ = model.predict(to_predict)
-    return stars
+    rating, _ = model.predict(to_predict)
+    stars = np.array(rating)
+    stars = stars / 2
+
+    return stars.tolist()
 
 
 def test_predictions():

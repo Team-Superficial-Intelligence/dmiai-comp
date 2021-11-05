@@ -50,7 +50,8 @@ def predict(request: PredictRequest) -> PredictResponse:
     tstart = time.time()
     ratings = predict_stars(model, request.reviews)
     tend = time.time()
-    print("time for 2 predictions:" + str(tend - tstart))
+    print("time for {} predictions: {}".format(len(request.reviews),
+                                               tend - tstart))
     json.dump(ratings, f)
     f.close()
     return PredictResponse(ratings=ratings)

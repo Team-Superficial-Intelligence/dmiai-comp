@@ -11,6 +11,7 @@ audience_review_pattern = "https://www.rottentomatoes.com/m/{}/reviews?type=user
 
 processed_movie_list_file = 'data/rt/processed_movie_list.json'
 rt_movie_list_file = 'data/rt/rotten_tomatoes_movies.csv.zip'
+movie_reviews_file = 'data/rt/movie_reviews.csv'
 
 review_elem_class = 'audience-reviews__review-wrap'
 review_text_class = 'audience-reviews__review'
@@ -73,15 +74,14 @@ def get_movie_id_list() -> list:
 if __name__ == '__main__':
     movie_id_list = get_movie_id_list()
     processed_movie_list = get_processed_movies()
-    processed_movie_set = set(processed_movie_list)
     random.shuffle(movie_id_list)
     for movie_id in movie_id_list:
-        if movie_id in processed_movie_set:
+        if movie_id in processed_movie_list:
             continue
         print('Scraping {}'.format(movie_id))
         reviews = get_movie_reviews(movie_id)
         processed_movie_list.append(movie_id)
-        with open('data/rt/scraped_movie_reviews.csv', 'a+', newline='') as f:
+        with open(movie_reviews_file, 'a+', newline='') as f:
             csv_writer = writer(f)
             n = 0
             for review in reviews:
@@ -89,4 +89,5 @@ if __name__ == '__main__':
                 csv_writer.writerow([movie_id, review[0], review[1]])
         # save each time in case of crash
         save_processed_movie_list(processed_movie_list)
-        print('Saved {} reviews for {}'.format(n, movie_id))
+        print('Saved {} reviews for {}. Total movies scraped: {}'.format(
+            n, movie_id, len(processed_movie_list)))

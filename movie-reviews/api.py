@@ -20,7 +20,7 @@ import time
 # emily = Emily()
 
 load_env()
-model = load_model(pt_dir='outputs-distil-gpt2', tt='gpt2')
+model = load_model(pt_dir='outputs')
 
 # --- Welcome to your Emily API! --- #
 # See the README for guides on how to test it.

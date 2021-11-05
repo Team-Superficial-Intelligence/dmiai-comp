@@ -163,13 +163,13 @@ def raw_output_to_stars(raw_outputs, scale=None):
 
 def predict_stars(model, to_predict):
     _, raw_outputs = model.predict(to_predict)
-    return raw_output_to_stars(raw_outputs, scale=np.array([1, 2, 3, 4, 5]))
+    return raw_output_to_stars(raw_outputs)
 
 
 def test_predictions():
     model = ClassificationModel("distilbert",
-                                "outputs-distilbert2",
-                                tokenizer_type=RobertaTokenizerFast)
+                                "outputs-distil-gpt2",
+                                tokenizer_type=GPT2TokenizerFast)
     preds, raw_outputs = model.predict([
         "This is a shit movie",
         "this is a great movie",
@@ -180,9 +180,11 @@ def test_predictions():
         "this is a great movie",
     ])
     tend = time.time()
+    stars = raw_output_to_stars(raw_outputs)
+    logging.log(logging.INFO, "stars:" + str(stars))
     logging.log(logging.INFO, "time for 2 predictions:" + str(tend - tstart))
 
 
 if __name__ == "__main__":
     # test_predictions()
-    main('amazon')
+    main()

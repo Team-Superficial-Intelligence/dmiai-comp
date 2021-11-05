@@ -51,7 +51,7 @@ if __name__ == "__main__":
     img_list = fii.split_img(img)
     choices = rc.find_img_choices(img_path, img_dir=img_dir)
     choices = [fii.read_img(img) for img in choices]
-
+    image_path = img_path
     for i, image_path in enumerate(image_paths):
         img_list = all_img_list(image_path)
         choice_paths = rc.find_img_choices(image_path, img_dir=img_dir)

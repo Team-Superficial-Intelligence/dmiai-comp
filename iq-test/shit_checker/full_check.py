@@ -7,6 +7,7 @@ from typing import List
 import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
+import shit_checker.no_change_check as ncc
 
 # import red_dot_check as rd
 # import rounding_check as ro
@@ -28,6 +29,10 @@ def check_shit(img_string: str, choice_list: List[str]):
     if rotation_result is not None:
         print("it's a rotation!")
         return rotation_result
+
+    no_change_result = ncc.check_semi_similar(img_list, choices)
+    if no_change_result is not None:
+        return no_change_result
 
     bitxor_result = cc.check_xor(img_list, choices)
     if bitxor_result is not None:

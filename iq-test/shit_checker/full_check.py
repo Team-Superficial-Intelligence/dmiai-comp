@@ -37,6 +37,7 @@ def check_shit(img_string: str, choice_list: List[str]):
 
     no_change_result = ncc.check_semi_similar(img_list, choices)
     if no_change_result is not None:
+        print("semi similar stuff!")
         return no_change_result
 
     bitxor_result = cc.check_xor(img_list, choices)

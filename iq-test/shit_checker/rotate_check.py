@@ -34,8 +34,7 @@ def check_similarity(source_img, target_img, func):
 def find_best_match(source_img, choices, func):
     image_guess = func(source_img)
     sim_scores = [
-        compare_ssim(image_guess, choice, multichannel=True)
-        for choice in choices
+        compare_ssim(image_guess, choice, multichannel=True) for choice in choices
     ]
     return np.argmax(sim_scores)
 
@@ -59,13 +58,17 @@ def check_rotations(full_list, choices):
     return None
 
 
-def find_img_choices(img_path: Path) -> List[Path]:
+def find_img_choices(img_path: Path, img_dir=None) -> List[Path]:
     identifier = find_identifier(img_path)
-    return list(IMG_PATH.glob(f"*{identifier}*choice*.png"))
+    if img_dir is None:
+        img_dir = IMG_PATH
+    return list(img_dir.glob(f"*{identifier}*choice*.png"))
 
 
-def find_img_files():
-    return list(IMG_PATH.glob("*image*.png"))
+def find_img_files(img_path=None):
+    if img_path is None:
+        img_path = IMG_PATH
+    return list(img_path.glob("*image*.png"))
 
 
 if __name__ == "__main__":

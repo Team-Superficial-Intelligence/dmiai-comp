@@ -2,6 +2,8 @@
     "id": "D3MAUH",
     "name": "iq-test",
     "containerName": "emily-iq-test-d3mauh",
+    "image": "cv",
+    "imageVersion": "1.0.0",
     "mountTargets": [
         "/workspace/data"
     ]

@@ -1,3 +1,6 @@
+# Procedural training data
+example-data/wheres-waldo/training_imgs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

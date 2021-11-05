@@ -1,4 +1,3 @@
-
 import uvicorn
 from fastapi import FastAPI
 from starlette.responses import HTMLResponse
@@ -7,6 +6,8 @@ import middleware.cors
 import middleware.logging
 from dtos.requests import PredictRequest
 from dtos.responses import PredictResponse
+
+from shit_checker import full_check
 
 from settings import Settings, load_env
 from static.render import render
@@ -22,7 +23,6 @@ load_env()
 # are accessible from any origin by default.
 # Make sure to restrict access below to origins you
 # trust before deploying your API to production.
-
 
 app = FastAPI()
 settings = Settings()
@@ -40,13 +40,11 @@ def predict(request: PredictRequest) -> PredictResponse:
 
     # Process the first two images, and predict the next correct image
     # from the list of image choices
-    
-    # Dummy prediction - chooses a random image from the list of choices
-    next_image_index = random.choice([index for index in range(len(choices))])
 
-    return PredictResponse(
-        next_image_index=next_image_index
-    )
+    # Dummy prediction - chooses a random image from the list of choices
+    next_image_index = full_check.check_shit(image, choices)
+
+    return PredictResponse(next_image_index=next_image_index)
 
 
 @app.get('/api')
@@ -60,18 +58,11 @@ def hello():
 @app.get('/')
 def index():
     return HTMLResponse(
-        render(
-            'static/index.html',
-            host=settings.HOST_IP,
-            port=settings.CONTAINER_PORT
-        )
-    )
+        render('static/index.html',
+               host=settings.HOST_IP,
+               port=settings.CONTAINER_PORT))
 
 
 if __name__ == '__main__':
 
-    uvicorn.run(
-        'api:app',
-        host=settings.HOST_IP,
-        port=settings.CONTAINER_PORT
-    )
+    uvicorn.run('api:app', host=settings.HOST_IP, port=settings.CONTAINER_PORT)

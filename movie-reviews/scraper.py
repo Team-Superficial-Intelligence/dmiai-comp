@@ -44,7 +44,7 @@ def get_processed_movies() -> list:
         return []
 
 
-def save_processed_movie_list(movie_list: list):
+def save_processed_movie_list(movie_list: list) -> None:
     with open(processed_movie_list_file, 'w') as f:
         json.dump(movie_list, f)
 

@@ -30,9 +30,9 @@ def load_model(mt='distilbert', pt_dir='outputs', tt='roberta'):
 
 
 def load_data(src='imdb_sup'):
-    ext = 'gz'
-    if src == 'imdb_sup':
-        ext = 'zip'
+    ext = 'zip'
+    if src == 'amazon':
+        ext = 'gz'
     fn = './data/{}.csv.{}'.format(src, ext)
     logging.log(logging.INFO, "Using file: {}".format(fn))
     df = pd.read_csv(fn, header=None, skiprows=1)
@@ -46,14 +46,22 @@ def load_data(src='imdb_sup'):
         logging.log(logging.INFO, "Filling gaps...")
         df.loc[df[1] > 6, 1] -= 2
         # index start from 0
-    else:
+        logging.log(logging.INFO, "Decrementing rating...")
+    elif src == 'amazon':
         # 8 million is too many
         logging.log(logging.INFO, "Gathering random sample...")
         df = df.sample(n=100000)
-    logging.log(logging.INFO, "Decrementing rating...")
-    df[1] -= 1
+        logging.log(logging.INFO, "Decrementing rating...")
+
+    elif src == 'movie_reviews':
+        logging.log(logging.INFO, "Removing extra column...")
+        del df[0]
+        df.columns = ["text", "labels"]
+        # set column values to 0-9
+        df["labels"] = (df["labels"] * 2)
 
     df.columns = ["text", "labels"]
+    df["labels"] -= 1
     logging.log(
         logging.INFO,
         "Final shape: {} rows, {} columns".format(df.shape[0], df.shape[1]))
@@ -88,9 +96,9 @@ def model_config(m):
 
 def main(src='imdb_sup'):
 
-    train_df, eval_df = train_test_split(load_data(src), train_size=0.5)
+    train_df, eval_df = train_test_split(load_data(src), train_size=0.8)
     # train_df, eval_df = [[('foo', 1)], [('bar', 2)]]
-    use_conf = 'dbert3'
+    use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
     if src == 'imdb_sup':
         n_labels = 8
@@ -98,7 +106,10 @@ def main(src='imdb_sup'):
     elif src == 'amazon':
         n_labels = 5
         epochs = 5
-        #pt = 'outputs-distilbert2'
+    elif src == 'movie_reviews':
+        n_labels = 10
+        epochs = 5
+
     # Optional model configuration
     # For xlnet large batch size max is 2
     model_args = ClassificationArgs(num_train_epochs=epochs,
@@ -111,7 +122,8 @@ def main(src='imdb_sup'):
                                   use_cuda=True,
                                   args=model_args,
                                   tokenizer_type=tt)
-    model.add_pad_token()
+    if use_conf == 'dbert3':
+        model.add_pad_token()
     # Train the model
     model.train_model(train_df)
 
@@ -161,9 +173,14 @@ def raw_output_to_stars(raw_outputs, scale=None):
     return probs_altered.tolist()
 
 
-def predict_stars(model, to_predict):
+def magic_predict_stars(model, to_predict):
     _, raw_outputs = model.predict(to_predict)
     return raw_output_to_stars(raw_outputs)
+
+
+def predict_stars(model, to_predict):
+    stars, _ = model.predict(to_predict)
+    return stars
 
 
 def test_predictions():
@@ -187,4 +204,4 @@ def test_predictions():
 
 if __name__ == "__main__":
     # test_predictions()
-    main()
+    main('movie_reviews')

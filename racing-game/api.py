@@ -6,6 +6,7 @@ from starlette.responses import HTMLResponse
 
 import middleware.cors
 import middleware.logging
+import middleware.contenttype
 from dtos.requests import PredictRequest
 from dtos.responses import PredictResponse, ActionType
 
@@ -27,14 +28,24 @@ load_env()
 
 app = FastAPI()
 settings = Settings()
-
+# force json request content type
+app.add_middleware(middleware.contenttype.ForceJSONContentTypeMiddleware)
 middleware.logging.setup(app, exclude_paths=['/api/predict'])
 middleware.cors.setup(app)
+
 
 
 @app.post('/api/predict', response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
 
+    if request.velocity.x < 80:
+        raction = ActionType.ACCELERATE
+    else:
+        raction = ActionType.DECELERATE
+
+    if request.did_crash:
+        logger.info(f'Crashed after {request.elapsed_time_ms} ms')
+    return PredictResponse(action=raction)
     # You receive the entire game state in the request object.
     # Read the game state and decide what to do in the next game tick.
 
@@ -74,5 +85,6 @@ if __name__ == '__main__':
     uvicorn.run(
         'api:app',
         host=settings.HOST_IP,
-        port=settings.CONTAINER_PORT
+        port=settings.CONTAINER_PORT,
+        debug=True
     )

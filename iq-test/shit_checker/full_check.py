@@ -60,7 +60,8 @@ def check_a_shit(img_string: str, choice_list: List[str]):
     choices = [base64_to_cv2(choice) for choice in choice_list]
     img_list = fii.split_img(img)
 
-    matrix_result = ms.check_matrix(img_list, choices)
+    matrices = ms.check_matrix(img_list, choices)
+    return matrices
 
 
 def test_shit():

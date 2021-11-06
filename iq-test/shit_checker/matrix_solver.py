@@ -26,12 +26,13 @@ hsv_colors = np.array([[0, 0, 0], [0, 0, 85], [0, 0, 170], [0, 0, 255],
 
 
 def check_matrix(img_list, choices):
-    #test_list = img_list[:3]
-    #final_imgs = img_list[3][:2]
+    # do some stuff
+    matrices = []
     for row in img_list:
         for img in row:
             # find contours
-            find_shapes_in_image(img, False)
+            matrices.append(find_shapes_in_image(img, False))
+    return matrices
 
 
 def find_nearest(array, value):
@@ -41,7 +42,7 @@ def find_nearest(array, value):
 
 
 def find_shapes_in_image(img, debug=False):
-    used_colors = set()
+    used_colors = []
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     th, threshed = cv2.threshold(img_gray, 100, 255,
                                  cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
@@ -86,6 +87,7 @@ def find_shapes_in_image(img, debug=False):
             cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
             # get index of nearest color from hsv_colors
             cnt_index = find_nearest(hsv_colors, cnt_hsv_avg)
-            used_colors.add(cnt_index)
-            matrix[row][col] = len(used_colors)
+            if cnt_index not in used_colors:
+                used_colors.append(cnt_index)
+            matrix[row][col] = used_colors.index(cnt_index) + 1
     return matrix

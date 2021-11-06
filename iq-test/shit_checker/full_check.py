@@ -9,6 +9,7 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import shit_checker.no_change_check as ncc
+import shit_checker.matrix_solver as ms
 
 # import red_dot_check as rd
 # import rounding_check as ro
@@ -49,14 +50,16 @@ def check_shit(img_string: str, choice_list: List[str]):
     if bitand_result is not None:
         print("bitand galore!")
         return bitand_result
+    matrix_result = ms.check_matrix(img_list, choices)
     print("let's go random!")
     return random.choice(range(len(choices)))
 
 
-if __name__ == "__main__":
+def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=img_dir)
     for img_path in img_paths:
+        print("Current image: {}".format(img_paths))
         img = read_img_string(img_path)
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
         choices = [read_img_string(img_file) for img_file in choice_paths]

@@ -8,7 +8,6 @@ from csv import writer
 
 audience_review_pattern = "https://www.rottentomatoes.com/m/{}/reviews?type=user"
 
-processed_movie_list_file = 'data/rt/processed_movie_list.json'
 rt_movie_list_file = 'data/rt/rotten_tomatoes_movies.csv.zip'
 movie_reviews_file = 'data/rt/movie_reviews.csv'
 
@@ -38,13 +37,8 @@ def get_movie_reviews(movie_name: str) -> list:
         yield review_text, review_score
 
 
-def save_processed_movie_list(movie_list: list) -> None:
-    """ Saves a list of movies that have been processed """
-    with open(processed_movie_list_file, 'w') as f:
-        json.dump(movie_list, f)
-
-
 def get_movie_id_list() -> list:
+    """ Returns a list of movies to process """
     df = pd.read_csv(rt_movie_list_file)
 
     movie_id_list = df['rotten_tomatoes_link'].squeeze().str.slice(
@@ -71,25 +65,25 @@ if __name__ == '__main__':
             print('Movie {} already processed, skipping.'.format(movie_id))
             continue
         print('Scraping {}'.format(movie_id))
-        try:
-            reviews = get_movie_reviews(movie_id)
-        except Exception as e:
-            error_count += 1
-            print(e)
-            if error_count > 10:
-                raise Exception(
-                    'Too many sequential errors, aborting, most likely banned by RT.'
-                )
-            continue
-        error_count = 0
+        reviews = get_movie_reviews(movie_id)
         processed_movie_list.append(movie_id)
         with open(movie_reviews_file, 'a+', newline='') as f:
             csv_writer = writer(f)
             n = 0
-            for review in reviews:
-                n += 1
-                csv_writer.writerow([movie_id, review[0], review[1]])
-        # save each time in case of crash
-        save_processed_movie_list(processed_movie_list)
+            try:
+                for review in reviews:
+                    n += 1
+                    csv_writer.writerow([movie_id, review[0], review[1]])
+            except Exception as e:
+                error_count += 1
+                print(e)
+                if error_count > 10:
+                    raise Exception(
+                        'Too many sequential errors, aborting, most likely banned by RT.'
+                    )
+                continue
+            # reset error count
+            error_count = 0
+
         print('Saved {} reviews for {}. Total movies scraped: {}/{}'.format(
             n, movie_id, len(processed_movie_list), total_num_movies))

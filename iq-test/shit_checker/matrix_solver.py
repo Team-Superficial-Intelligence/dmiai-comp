@@ -84,7 +84,7 @@ def find_shapes_in_image(img, debug=False):
             cnt_hsv = cv2.cvtColor(cnt_img, cv2.COLOR_BGR2HSV)
             cnt_hsv_avg = np.average(cnt_hsv, axis=0).astype(np.uint8)
             cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
-            cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
+            # cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
             # get index of nearest color from hsv_colors
             cnt_index = find_nearest(hsv_colors, cnt_hsv_avg)
             if cnt_index not in used_colors:

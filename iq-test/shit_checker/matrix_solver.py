@@ -1,48 +1,59 @@
+from asyncore import close_all
+from multiprocessing.connection import wait
+from pydoc import describe
 import cv2
-import numbpy as np
+import numpy as np
 
 
 def check_matrix(img_list, choices):
-    pass
+    #test_list = img_list[:3]
+    #final_imgs = img_list[3][:2]
+    for row in img_list:
+        for img in row:
+            # find contours
+            find_shapes_in_image(img, False)
+
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
 
 
 def find_shapes_in_image(img, debug=False):
-    # find contours
-    contours, hierarchy = cv2.findContours(img, cv2.RETR_TREE,
-                                           cv2.CHAIN_APPROX_SIMPLE)
-    # draw contours
-    img_contours = cv2.drawContours(
-        np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8), contours,
-        -1, (255, 255, 255), 2)
-
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    th, threshed = cv2.threshold(img_gray, 100, 255,
+                                 cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
     if debug:
-        cv2.imshow('contours', img_contours)
+        cv2.imshow("threshed", threshed)
+        cv2.waitKey(1000)
 
-    # create list of contours
-    contours_list = []
-    for contour in contours:
-        contours_list.append(contour)
-    # sort contours
-    contours_list = sorted(contours_list, key=lambda x: len(x), reverse=True)
+    # get image dimensions
+    height, width = threshed.shape
+    rowsize = round(height / 6)
+    colsize = round(width / 6)
 
-    # find squares
-    squares = []
-    for contour in contours_list:
-        # find bounding box
-        x, y, w, h = cv2.boundingRect(contour)
-        # check if square
-        if (w > h and w < img.shape[1] / 2):
-            # check if it is not a small square
-            if (w > img.shape[0] / 4):
-                # check if it is not a small square
-                if (w > img.shape[1] / 4):
-                    # draw square
-                    img_square = cv2.rectangle(
-                        np.zeros((img.shape[0], img.shape[1], 3),
-                                 dtype=np.uint8), (x, y), (x + w, y + h),
-                        (255, 255, 255), 2)
-                    # check if it is not a small square
-                    if (w > img.shape[1] / 8):
-                        # add square to squares list
-                        squares.append((x, y, w, h))
-                        # draw square
+    rows = np.array(range(rowsize, height - round(rowsize / 2), rowsize))
+    cols = np.array(range(colsize, width - round(rowsize / 2), colsize))
+
+    cnts = cv2.findContours(threshed, cv2.RETR_LIST,
+                            cv2.CHAIN_APPROX_SIMPLE)[-2]
+    matrix = np.zeros((5, 5))
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    (cnts, boundingBoxes) = zip(
+        *sorted(zip(cnts, boundingBoxes), key=lambda b: b[1][0]))
+    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    (cnts, boundingBoxes) = zip(
+        *sorted(zip(cnts, boundingBoxes), key=lambda b: b[1][1]))
+
+    for cnt in cnts:
+        M = cv2.moments(cnt)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        row = find_nearest(rows, cY)
+        col = find_nearest(cols, cX)
+        # add to matrix if area is big enough
+        if cv2.contourArea(cnt) > 20:
+            matrix[row][col] = 1
+
+    return matrix

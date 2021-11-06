@@ -55,12 +55,21 @@ def check_shit(img_string: str, choice_list: List[str]):
     return random.choice(range(len(choices)))
 
 
+def check_a_shit(img_string: str, choice_list: List[str]):
+    img = base64_to_cv2(img_string)
+    choices = [base64_to_cv2(choice) for choice in choice_list]
+    img_list = fii.split_img(img)
+
+    matrix_result = ms.check_matrix(img_list, choices)
+
+
 def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
-    img_paths = rc.find_img_files(img_path=img_dir)
+    img_paths = rc.find_img_files(img_path=img_dir,
+                                  pattern="rq_1635798965816196900*.png")
     for img_path in img_paths:
-        print("Current image: {}".format(img_paths))
+        print("Current image: {}".format(img_path))
         img = read_img_string(img_path)
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
         choices = [read_img_string(img_file) for img_file in choice_paths]
-        print(check_shit(img, choices))
+        print(check_a_shit(img, choices))

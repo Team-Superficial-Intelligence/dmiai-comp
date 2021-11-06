@@ -2,7 +2,6 @@ import random
 from bs4 import BeautifulSoup
 from os.path import isfile
 import json
-import urllib
 import pandas as pd
 import requests
 from csv import writer
@@ -21,10 +20,13 @@ half_star_class = 'star-display__half'
 
 
 def get_movie_reviews(movie_name: str) -> list:
+    """ Returns a list of reviews for a given movie """
     url = audience_review_pattern.format(movie_name)
     html = requests.get(url).text
     soup = BeautifulSoup(html, 'html.parser')
     reviews = soup.find_all('div', class_=review_elem_class)
+    if len(reviews) == 0:
+        raise Exception('No reviews found for {}'.format(movie_name))
     for review in reviews:
         review_text = review.find('p', class_=review_text_class).text
         review_score_wrapper = review.find('span', class_=review_score_class)
@@ -36,29 +38,10 @@ def get_movie_reviews(movie_name: str) -> list:
         yield review_text, review_score
 
 
-def get_processed_movies() -> list:
-    if isfile(processed_movie_list_file):
-        with open(processed_movie_list_file) as f:
-            return json.load(f)
-    else:
-        return []
-
-
 def save_processed_movie_list(movie_list: list) -> None:
+    """ Saves a list of movies that have been processed """
     with open(processed_movie_list_file, 'w') as f:
         json.dump(movie_list, f)
-
-
-def scrape_movie_ids() -> list:
-    movie_id_list = []
-    url = 'https://www.rottentomatoes.com/m/twist_2021/reviews?type=user'
-    html = requests.get(url).text
-    soup = BeautifulSoup(html, 'html.parser')
-    movies = soup.find_all("div", class_='poster_container')
-    for movie in movies:
-        movie_name = movie.find('a').url.split('/')[-1]
-        movie_id_list.append(movie_name)
-    return movie_id_list
 
 
 def get_movie_id_list() -> list:
@@ -69,11 +52,18 @@ def get_movie_id_list() -> list:
     return movie_id_list
 
 
-# for review in get_movie_reviews('twist_2021'):
-#     print(review)
+def get_unique_movies_from_review_csv() -> list:
+    """ Returns a list of movies that have been processed """
+    if isfile(movie_reviews_file):
+        df = pd.read_csv(movie_reviews_file, header=None)
+        return df[0].unique().tolist()
+    return []
+
+
 if __name__ == '__main__':
+    error_count = 0
     movie_id_list = get_movie_id_list()
-    processed_movie_list = get_processed_movies()
+    processed_movie_list = get_unique_movies_from_review_csv()
     random.shuffle(movie_id_list)
     total_num_movies = len(movie_id_list)
     for movie_id in movie_id_list:
@@ -81,7 +71,17 @@ if __name__ == '__main__':
             print('Movie {} already processed, skipping.'.format(movie_id))
             continue
         print('Scraping {}'.format(movie_id))
-        reviews = get_movie_reviews(movie_id)
+        try:
+            reviews = get_movie_reviews(movie_id)
+        except Exception as e:
+            error_count += 1
+            print(e)
+            if error_count > 10:
+                raise Exception(
+                    'Too many sequential errors, aborting, most likely banned by RT.'
+                )
+            continue
+        error_count = 0
         processed_movie_list.append(movie_id)
         with open(movie_reviews_file, 'a+', newline='') as f:
             csv_writer = writer(f)

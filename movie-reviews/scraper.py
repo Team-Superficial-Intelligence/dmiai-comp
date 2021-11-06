@@ -1,7 +1,6 @@
 import random
 from bs4 import BeautifulSoup
 from os.path import isfile
-import json
 import pandas as pd
 import requests
 from csv import writer

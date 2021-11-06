@@ -23,6 +23,13 @@ class MyClassificationModel(ClassificationModel):
 
 
 def load_model(mt='distilbert', pt_dir='outputs', tt='roberta'):
+    # m_args = {
+    #     'reprocess_input_data': True,
+    #     'use_cached_eval_features': False,
+    # }
+    # global_args.global_args["use_cached_eval_features"] = False
+    # global_args.global_args["reprocess_input_data"] = True
+
     tok = RobertaTokenizerFast
     if tt == 'gpt2':
         tok = GPT2TokenizerFast
@@ -101,6 +108,8 @@ def main(src='imdb_sup'):
     # train_df, eval_df = [[('foo', 1)], [('bar', 2)]]
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
+    # this time start from previously trained model
+    pt = 'outputs-distil-roberta-lge-cont/checkpoint-12576-epoch-2'
     if src == 'imdb_sup':
         n_labels = 8
         epochs = 5
@@ -196,9 +205,10 @@ def predict_stars(model, to_predict):
 
 
 def test_predictions():
-    model = ClassificationModel("distilbert",
-                                "outputs-distil-gpt2",
-                                tokenizer_type=GPT2TokenizerFast)
+    model = ClassificationModel(
+        "distilbert",
+        "outputs-distil-roberta-rt-med/checkpoint-11280-epoch-15",
+        tokenizer_type=GPT2TokenizerFast)
     preds, raw_outputs = model.predict([
         "This is a shit movie",
         "this is a great movie",

@@ -109,7 +109,7 @@ def main(src='imdb_sup'):
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
     # this time start from previously trained model
-    pt = 'outputs-distil-roberta-lge-cont/checkpoint-12576-epoch-2'
+    pt = 'outputs-distil-roberta-lge-cont-e15/checkpoint-27248-epoch-1'
     if src == 'imdb_sup':
         n_labels = 8
         epochs = 5
@@ -198,7 +198,7 @@ def magic_predict_stars(model, to_predict):
 
 def predict_stars(model, to_predict):
     rating, _ = model.predict(to_predict)
-    stars = np.array(rating)
+    stars = np.array(rating) + 1
     stars = stars / 2
 
     return stars.tolist()

@@ -1,3 +1,4 @@
+import functools
 from numpy.random.mtrand import noncentral_chisquare
 import shit_checker.format_iq_imgs as fii
 import shit_checker.rotate_check as rc
@@ -267,10 +268,21 @@ def circle_to_num(img):
     return [find_circle_color(img, circle) for circle in circles]
 
 
+def mask_colours(img):
+    """ Creates a funky mask that will solve all our problem """
+    colors = BOUNDARIES[:4]
+    new_img = np.zeros(img.shape[:2], dtype=np.uint8)
+    for color in colors:
+        new_mask = cv2.inRange(img, color[0], color[1])
+        fii.show_img(new_mask)
+        new_img = cv2.bitwise_or(new_img, new_mask)
+    return new_img
+
+
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
-    img_path = img_paths[5]
+    img_path = img_paths[6]
     img = fii.read_img(img_path)
     img_list = fii.split_img(img)
     choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
@@ -278,7 +290,7 @@ if __name__ == "__main__":
     circle_logic_check(img_list, choices)
     fii.show_img(choices[1])
     test_img = img_list[0][0]
-    fii.show_img(test_img)
+
     circles = find_circles(test_img)
     for (x, y, r) in circles:
         output = test_img.copy()

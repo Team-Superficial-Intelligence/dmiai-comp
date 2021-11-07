@@ -141,7 +141,7 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     if s.step % 500 == 0:
         print(
-            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {s.distance}\n\t{b.END}')
+            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\t{b.END}')
 
     s.step += 1
     if r.did_crash or r.elapsed_time_ms < 5:

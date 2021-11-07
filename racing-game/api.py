@@ -139,7 +139,7 @@ def predict(response: PredictRequest) -> PredictResponse:
             action = a.DECELERATE
             s.avoid_front = False
 
-    if s.step % 500 == 0:
+    if s.step % 500 == 0 and s.step != 0:
         print(
             f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\t{b.END}')
 

@@ -43,8 +43,8 @@ def check_shit(img_string: str, choice_list: List[str]):
         (rc.check_rotations, "rotation"),
         (ncc.check_semi_similar, "semi-similar"),
         (gl.check_grid, "grid wuhuu"),
-        (cc.check_xor, "xor"),
-        (cc.check_bitand, "bitand hehe"),
+        (cc.circle_logic_check, "circle color logic"),
+        (cc.color_logic_check, "color logic homie"),
     ]
 
     for func, print_msg in func_list:

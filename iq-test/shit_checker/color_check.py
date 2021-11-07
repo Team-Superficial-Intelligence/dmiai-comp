@@ -1,9 +1,11 @@
+import functools
 from numpy.random.mtrand import noncentral_chisquare
 import shit_checker.format_iq_imgs as fii
 import shit_checker.rotate_check as rc
 import cv2
 import numpy as np
 import imutils
+from typing import List
 from pathlib import Path
 from sklearn.cluster import MiniBatchKMeans
 
@@ -197,17 +199,30 @@ def not_and(src1, src2):
     return ~np.logical_and(src1, src2)
 
 
+def check_equal_len(arrays: List[np.array]) -> bool:
+    return np.all([x.shape == arrays[0][0].shape for arr in arrays for x in arr])
+
+
 def color_logic_check(img_list, choices):
     test_list = img_list[:3]
     final_imgs = img_list[3][:2]
     # convert to nums
-    a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
-    a_list = [correct_cols(arrs) for arrs in a_list]
-    choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
-    final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
+    try:
+        a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
+        if not check_equal_len(a_list):
+            print("oh no len error")
+            return None
+        a_list = [correct_cols(arrs) for arrs in a_list]
+        choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
+        final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
+    except TypeError:
+        return None
     func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
     for func in func_list:
-        result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        try:
+            result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        except ValueError:
+            return None
         if result is not None:
             return result
     return None
@@ -217,13 +232,19 @@ def circle_logic_check(img_list, choices):
     test_list = img_list[:3]
     final_imgs = img_list[3][:2]
     # convert to nums
-    a_list = [[circle_to_num(img) for img in lst] for lst in test_list]
-    a_list = [correct_cols(arrs) for arrs in a_list]
-    choice_arrs = correct_cols([circle_to_num(choice) for choice in choices])
-    final_arrs = correct_cols([circle_to_num(img) for img in final_imgs])
+    try:
+        a_list = [[circle_to_num(img) for img in lst] for lst in test_list]
+        a_list = [correct_cols(arrs) for arrs in a_list]
+        choice_arrs = correct_cols([circle_to_num(choice) for choice in choices])
+        final_arrs = correct_cols([circle_to_num(img) for img in final_imgs])
+    except TypeError:
+        return None
     func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
     for func in func_list:
-        result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        try:
+            result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        except ValueError:
+            return None
         if result is not None:
             return result
     return None
@@ -267,18 +288,31 @@ def circle_to_num(img):
     return [find_circle_color(img, circle) for circle in circles]
 
 
+def mask_colours(img):
+    """ Creates a funky mask that will solve all our problem """
+    colors = BOUNDARIES[:4]
+    new_img = np.zeros(img.shape[:2], dtype=np.uint8)
+    for color in colors:
+        new_mask = cv2.inRange(img, color[0], color[1])
+        # fii.show_img(new_mask)
+        new_img = cv2.bitwise_or(new_img, new_mask)
+    return new_img
+
+
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
-    img_path = img_paths[5]
-    img = fii.read_img(img_path)
-    img_list = fii.split_img(img)
-    choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
-    choices = [fii.read_img(choice) for choice in choice_paths]
-    circle_logic_check(img_list, choices)
+    img_path = img_paths[-3]
+    for img_path in img_paths:
+        img = fii.read_img(img_path)
+        img_list = fii.split_img(img)
+        choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
+        choices = [fii.read_img(choice) for choice in choice_paths]
+        print(circle_logic_check(img_list, choices))
+        print(color_logic_check(img_list, choices))
     fii.show_img(choices[1])
     test_img = img_list[0][0]
-    fii.show_img(test_img)
+
     circles = find_circles(test_img)
     for (x, y, r) in circles:
         output = test_img.copy()

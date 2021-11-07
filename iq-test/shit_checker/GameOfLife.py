@@ -12,6 +12,7 @@ import os
 from skimage.metrics import structural_similarity as compare_ssim
 import imutils
 
+
 def count_dots(img):
     gray = cc.to_gray(img)
     # threshold
@@ -38,29 +39,34 @@ def check_grid(full_list, choices):
 def mean_dots(full_list):
     return np.mean([count_dots(img) for lst in full_list for img in lst])
 
+
 def cnt_size(cnt):
     _, _, w, _ = cv2.boundingRect(cnt)
     return w
+
 
 def get_contour_precedence(contour, cols):
     tolerance_factor = 10
     origin = cv2.boundingRect(contour)
     return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
 
+
 def ultimate_mask(img):
-    black = (np.array([0, 0, 0]),np.array([30, 30, 30]))
+    black = (np.array([0, 0, 0]), np.array([30, 30, 30]))
     boundaries = cc.BOUNDARIES + [black]
     masks = [cv2.inRange(img, bound[0], bound[1]) for bound in boundaries]
     return functools.reduce(cv2.bitwise_or, masks)
 
+
 def get_cnts(img):
     imgray = cc.to_gray(img)
     _, thresh = cv2.threshold(imgray, 127, 255, 0)
-    contours= cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(contours)
-    cnts = [cnt for cnt in cnts if cnt_size(cnt)<80]  
-    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
+    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 80]
+    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
     return cnts
+
 
 def count_color(img, bound):
     return np.sum(cv2.inRange(img, bound[0], bound[1]))
@@ -68,9 +74,10 @@ def count_color(img, bound):
 
 def find_cnt_color(image, cnt):
     x, y, w, h = cv2.boundingRect(cnt)
-    img_crop = image[y:y+h, x:x+w]
+    img_crop = image[y : y + h, x : x + w]
     bnd_count = [count_color(img_crop, bound) for bound in cc.BOUNDARIES]
     return np.argmax(bnd_count)
+
 
 def cnt_to_nums(img, cnts):
     num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
@@ -79,36 +86,39 @@ def cnt_to_nums(img, cnts):
         num_array = num_array == unique_cols[0]
     return num_array
 
+
 def convert_to_nums(img):
     cnts = get_cnts(img)
     return cnt_to_nums(img, cnts)
 
+
 def neighbors(im, i, j):
-    return [im[i-1, j-1]]
+    return [im[i - 1, j - 1]]
+
 
 def do_game_of_life(mat: np.ndarray) -> np.ndarray:
     new_mat = mat.copy()
     positions = itertools.product(range(new_mat.shape[0]), range(new_mat.shape[1]))
-    for pos in positions:    
+    for pos in positions:
         elem = new_mat[pos[0], pos[1]]
         if elem != 0:
             # neighbour 0
-            if new_mat[pos[0]-1, pos[0]] == 0 and pos[0]-1 >= 0:
-                new_mat[pos[0]-1, pos[0]] = elem   
-            elif new_mat[pos[0]-1, pos[0]] != elem and pos[0]-1 >= 0:
-                new_mat[pos[0]-1, pos[0]] = 0
-            if new_mat[pos[0]+1, pos[0]] == 0 and pos[0]+1 <= mat.shape[0]:
-                new_mat[pos[0]+1, pos[0]] = elem   
-            elif new_mat[pos[0]+1, pos[0]] != elem and pos[0]+1 <= mat.shape[0]:
-                new_mat[pos[0]+1, pos[0]] = 0
-            if new_mat[pos[0], pos[1]-1] == 0 and pos[1]-1 <= mat.shape[1]:
-                new_mat[pos[0], pos[1]-1] = elem   
-            elif new_mat[pos[0], pos[1]-1] != elem and pos[1]-1 <= mat.shape[1]:
-                new_mat[pos[0], pos[1]-1] = 0
-            if new_mat[pos[0], pos[1]+1] == 0 and pos[1]+1 <= mat.shape[1]:
-                new_mat[pos[0], pos[1]+1] = elem   
-            elif new_mat[pos[0], pos[1]+1] != elem and pos[1]+1 <= mat.shape[0]:
-                new_mat[pos[0], pos[1]+1] = 0
+            if new_mat[pos[0] - 1, pos[0]] == 0 and pos[0] - 1 >= 0:
+                new_mat[pos[0] - 1, pos[0]] = elem
+            elif new_mat[pos[0] - 1, pos[0]] != elem and pos[0] - 1 >= 0:
+                new_mat[pos[0] - 1, pos[0]] = 0
+            if new_mat[pos[0] + 1, pos[0]] == 0 and pos[0] + 1 <= mat.shape[0]:
+                new_mat[pos[0] + 1, pos[0]] = elem
+            elif new_mat[pos[0] + 1, pos[0]] != elem and pos[0] + 1 <= mat.shape[0]:
+                new_mat[pos[0] + 1, pos[0]] = 0
+            if new_mat[pos[0], pos[1] - 1] == 0 and pos[1] - 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] - 1] = elem
+            elif new_mat[pos[0], pos[1] - 1] != elem and pos[1] - 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] - 1] = 0
+            if new_mat[pos[0], pos[1] + 1] == 0 and pos[1] + 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] + 1] = elem
+            elif new_mat[pos[0], pos[1] + 1] != elem and pos[1] + 1 <= mat.shape[0]:
+                new_mat[pos[0], pos[1] + 1] = 0
     return new_mat
 
 
@@ -134,16 +144,17 @@ if __name__ == "__main__":
     fii.show_img(image)
     a = convert_to_nums(image)
 
-    shapeMask = ultimate_mask(image) 
-    cnts = cv2.findContours(shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    shapeMask = ultimate_mask(image)
+    cnts = cv2.findContours(
+        shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
     cnts = imutils.grab_contours(cnts)
     cnts = [cnt for cnt in cnts if cnt_size(cnt) < 100]
-    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
+    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
     fii.show_img(shapeMask)
     for cnt in cnts:
         new_img = cv2.drawContours(image.copy(), [cnt], -1, (0, 255, 0), 2)
         fii.show_img(new_img)
-	cv2.waitKey(0)
     count_dots(image)
     full_list = image_list
     check_grid(image_list, choices)

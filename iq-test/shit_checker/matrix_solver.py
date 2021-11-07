@@ -20,10 +20,7 @@ def check_matrix(img_list, choices) -> None:
         print("matrices found")
 
 
-def get_matrix_representations(
-    img_list, choices
-) -> Union[List[List[List[np.ndarray]], List[np.ndarray], List[np.ndarray]],
-           None]:
+def get_matrix_representations(img_list, choices) -> Union[List, None]:
     # do some stuff
     test_cases = img_list[:3]
     final_imgs = img_list[3][:2]
@@ -55,7 +52,7 @@ def get_matrix_representations(
 
     if not found_matrix:
         return None
-    return test_matrices, final_matrices, choice_matrices
+    return [test_matrices, final_matrices, choice_matrices]
 
 
 def find_nearest(array, value):

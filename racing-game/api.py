@@ -73,7 +73,7 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     action = a.ACCELERATE
     front_lim = 900
-    speed_lim = 1000
+    speed_lim = 2000
 
     if s.start_timing < 0:
         s.avoid_front = False
@@ -141,7 +141,7 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     if s.step % 500 == 0 and s.step != 0:
         print(
-            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\tElapsed time: {r.elapsed_time_ms}\n{b.END}')
+            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\tElapsed time: {r.elapsed_time_ms}\n\tSpeed: {r.velocity.x}\n{b.END}')
 
     s.step += 1
     if r.did_crash or r.elapsed_time_ms < 5:

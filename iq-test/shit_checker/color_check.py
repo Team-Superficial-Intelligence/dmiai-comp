@@ -5,6 +5,7 @@ import shit_checker.rotate_check as rc
 import cv2
 import numpy as np
 import imutils
+from typing import List
 from pathlib import Path
 from sklearn.cluster import MiniBatchKMeans
 
@@ -198,12 +199,19 @@ def not_and(src1, src2):
     return ~np.logical_and(src1, src2)
 
 
+def check_equal_len(arrays: List[np.array]) -> bool:
+    return np.all([x.shape == arrays[0][0].shape for arr in arrays for x in arr])
+
+
 def color_logic_check(img_list, choices):
     test_list = img_list[:3]
     final_imgs = img_list[3][:2]
     # convert to nums
     try:
         a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
+        if not check_equal_len(a_list):
+            print("oh no len error")
+            return None
         a_list = [correct_cols(arrs) for arrs in a_list]
         choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
         final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
@@ -294,7 +302,7 @@ def mask_colours(img):
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
-    img_path = img_paths[0]
+    img_path = img_paths[-3]
     for img_path in img_paths:
         img = fii.read_img(img_path)
         img_list = fii.split_img(img)

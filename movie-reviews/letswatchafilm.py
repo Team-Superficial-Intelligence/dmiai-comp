@@ -24,18 +24,22 @@ class MyClassificationModel(ClassificationModel):
 
 
 def load_model(mt='distilbert', pt_dir='outputs', tt='roberta'):
-    # m_args = {
-    #     'reprocess_input_data': True,
-    #     'use_cached_eval_features': False,
-    # }
-    # global_args.global_args["use_cached_eval_features"] = False
-    # global_args.global_args["reprocess_input_data"] = True
+    m_args = {
+        'reprocess_input_data': True,
+        'use_cached_eval_features': False,
+    }
+    global_args.global_args["use_cached_eval_features"] = False
+    global_args.global_args["reprocess_input_data"] = True
 
     tok = RobertaTokenizerFast
     if tt == 'gpt2':
         tok = GPT2TokenizerFast
     # global_args.global_args["use_cached_eval_features"] = True
-    return ClassificationModel(mt, pt_dir, tokenizer_type=tok)
+    return ClassificationModel(mt,
+                               pt_dir,
+                               tokenizer_type=tok,
+                               use_cuda=True,
+                               args=m_args)
 
 
 def load_data(src='imdb_sup'):
@@ -110,7 +114,7 @@ def main(src='imdb_sup'):
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
     # this time start from previously trained model
-    pt = 'outputs-distil-roberta-wd-cont-e37/checkpoint-39000'
+    pt = 'outputs/best_model'
     if src == 'imdb_sup':
         n_labels = 8
         epochs = 5
@@ -119,7 +123,7 @@ def main(src='imdb_sup'):
         epochs = 5
     elif src == 'movie_reviews':
         n_labels = 10
-        epochs = 50
+        epochs = 100
 
     # Optional model configuration
     # For xlnet large batch size max is 2
@@ -128,12 +132,12 @@ def main(src='imdb_sup'):
                                     train_batch_size=bs)
     if src == 'movie_reviews':
         model_args.use_early_stopping = True
-        model_args.early_stopping_delta = 0.01
+        model_args.early_stopping_delta = 0.001
         model_args.early_stopping_metric = "mcc"
         model_args.early_stopping_metric_minimize = False
-        model_args.early_stopping_patience = 5
+        model_args.early_stopping_patience = 10
         model_args.evaluate_during_training_steps = 250
-        model_args.weight_decay = 0.1
+        model_args.weight_decay = 0.01
         model_args.eval_batch_size = 1000
         model_args.evaluate_during_training = True
         model_args.evaluate_during_training_silent = False

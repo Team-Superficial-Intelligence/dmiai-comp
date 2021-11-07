@@ -28,7 +28,9 @@ def rotate180(img):
 
 def check_similarity(source_img, target_img, func):
     new_img = func(source_img)
-    return compare_ssim(new_img, target_img, multichannel=True) > 0.87
+    comp = compare_ssim(new_img, target_img, multichannel=True)
+    print(comp)
+    return comp > 0.82
 
 
 def find_best_match(source_img, choices, func):
@@ -45,6 +47,7 @@ def check_rotation(full_list, choices, func):
     final_img = full_list[3][0]
     # Check 90 Counter
     case = all(check_similarity(lst[0], lst[2], func) for lst in test_cases)
+    print(case)
     if case:
         return find_best_match(final_img, choices, func)
     return None

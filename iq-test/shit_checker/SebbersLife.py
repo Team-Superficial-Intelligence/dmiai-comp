@@ -13,7 +13,9 @@ Green = 1000
 Yellow = 10000
 
 # Combinations
-Red_combi = [10, 20, 30, 40, 120, 130, 1020, 1030, 1120, 10020, 10030, 11020, 10120]
+Red_combi = [
+    10, 20, 30, 40, 120, 130, 1020, 1030, 1120, 10020, 10030, 11020, 10120
+]
 Blue_combi = [
     100,
     200,
@@ -78,14 +80,13 @@ Blank_combi = [
 
 def format_matrix(matrix: np.ndarray) -> np.ndarray:
     new_matrix = matrix.copy()
-    new_matrix[new_matrix > 0] = 10 ** new_matrix[new_matrix > 0]
+    new_matrix[new_matrix > 0] = 10**new_matrix[new_matrix > 0]
     return new_matrix.astype(np.int16)
 
 
 def check_gol_row(new_matrices):
-    return np.all(next_step(new_matrices[0]) == new_matrices[1]) and np.all(
-        next_step(new_matrices[1]) == new_matrices[2]
-    )
+    return np.any(next_step(new_matrices[0]) == new_matrices[1]) and np.all(
+        next_step(new_matrices[1]) == new_matrices[2])
 
 
 def check_gol(row_case: List[np.ndarray]) -> bool:
@@ -103,8 +104,11 @@ def check_all_gol(img_list, choices):
     result = np.any([check_gol(row_case) for row_case in full_matrix[0]])
     if result:
         pred = next_step(format_matrix(full_matrix[1][1]))
-        formatted_choices = [format_matrix(choice) for choice in full_matrix[2]]
-        return np.argmax([np.sum(choice == pred) for choice in formatted_choices])
+        formatted_choices = [
+            format_matrix(choice) for choice in full_matrix[2]
+        ]
+        return np.argmax(
+            [np.sum(choice == pred) for choice in formatted_choices])
     return None
 
 
@@ -141,4 +145,3 @@ if __name__ == "__main__":
     # Image to alter
 
     check_all_gol(img_list, choices)
-

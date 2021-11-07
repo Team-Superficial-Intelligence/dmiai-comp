@@ -42,11 +42,11 @@ def check_shit(img_string: str, choice_list: List[str]):
     img_list = fii.split_img(img)
 
     func_list = [
-        (rc.check_rotations, "rotation"),
         (ncc.check_semi_similar, "semi-similar"),
         (sl.check_all_gol, "game of life!"),
         (gl.check_grid, "grid wuhuu"),
         (cc.circle_logic_check, "circle color logic"),
+        (rc.check_rotations, "rotation"),
         (cc.color_logic_check, "color logic homie"),
     ]
 
@@ -71,8 +71,8 @@ def check_a_shit(img_string: str, choice_list: List[str]):
 def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(
-        img_path=img_dir, pattern="rq_1635798965381646400_image_356243069114892252.png"
-    )
+        img_path=img_dir,
+        pattern="rq_1635798965381646400_image_356243069114892252.png")
     # pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))

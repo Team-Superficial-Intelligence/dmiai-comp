@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     results_log = []
     lane = 0
     auto = "left"
+    last_distance = 0
+    total_distance = 0
+    episode = 0
 
 
 def load_env():

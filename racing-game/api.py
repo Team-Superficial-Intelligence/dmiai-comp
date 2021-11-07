@@ -38,6 +38,8 @@ s.avoid_front = False
 s.action_timing = 0
 s.action_choice = a.ACCELERATE
 s.lane = "mid"
+s.total_distance = 0
+s.last_distance = 0
 
 
 @app.post('/api/predict', response_model=PredictResponse)
@@ -73,7 +75,7 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     action = a.ACCELERATE
     front_lim = 900
-    speed_lim = 1500
+    speed_lim = 1000
 
     if s.start_timing < 0:
         s.avoid_front = False
@@ -141,7 +143,9 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     if s.step % 500 == 0 and s.step != 0:
         print(
-            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\tElapsed time: {r.elapsed_time_ms}\n\tSpeed: {r.velocity.x}\n{b.END}')
+            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\tElapsed time: {r.elapsed_time_ms}\n\tSpeed: {r.velocity.x}\n\tTotal distance: {s.total_distance}{b.END}\n')
+        s.total_distance += r.distance - s.last_distance
+        s.last_distance = r.distance
 
     s.step += 1
     if r.did_crash or r.elapsed_time_ms < 10:
@@ -151,9 +155,11 @@ def predict(response: PredictRequest) -> PredictResponse:
                 'last_action': action,
                 'did_crash': r.did_crash,
                 'distance': r.distance,
+                'total_distance': s.total_distance
             }
         )
         print(f'Results {s.results_log[-1]}')
+        s.episode += 1
         s.step = 0
         s.avoid_front = False
 

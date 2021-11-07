@@ -175,18 +175,16 @@ def correct_cols(array_list):
     return new_arrays
 
 
-def final_logic_guess(final_imgs, choices, func):
-    choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
-    final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
+def final_logic_guess(final_arrs, choice_arrs, func):
     guess = func(*final_arrs)
     choice_truth = [(guess == arr).all() for arr in choice_arrs]
     return np.argmax(choice_truth) if np.any(choice_truth) else None
 
 
-def check_logic_func(a_list, final_imgs, choices, func):
+def check_logic_func(a_list, final_arrs, choice_arrs, func):
     result = [arr_check(*lst, func=func) for lst in a_list]
     if result:
-        guess = final_logic_guess(final_imgs, choices, func)
+        guess = final_logic_guess(final_arrs, choice_arrs, func)
         return guess
     return None
 
@@ -205,9 +203,27 @@ def color_logic_check(img_list, choices):
     # convert to nums
     a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
     a_list = [correct_cols(arrs) for arrs in a_list]
+    choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
+    final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
     func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
     for func in func_list:
-        result = check_logic_func(a_list, final_imgs, choices, func)
+        result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        if result is not None:
+            return result
+    return None
+
+
+def circle_logic_check(img_list, choices):
+    test_list = img_list[:3]
+    final_imgs = img_list[3][:2]
+    # convert to nums
+    a_list = [[circle_to_num(img) for img in lst] for lst in test_list]
+    a_list = [correct_cols(arrs) for arrs in a_list]
+    choice_arrs = correct_cols([circle_to_num(choice) for choice in choices])
+    final_arrs = correct_cols([circle_to_num(img) for img in final_imgs])
+    func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
+    for func in func_list:
+        result = check_logic_func(a_list, final_arrs, choice_arrs, func)
         if result is not None:
             return result
     return None
@@ -246,6 +262,11 @@ def find_circles(img):
     return circles
 
 
+def circle_to_num(img):
+    circles = find_circles(img)
+    return [find_circle_color(img, circle) for circle in circles]
+
+
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
@@ -254,6 +275,8 @@ if __name__ == "__main__":
     img_list = fii.split_img(img)
     choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
     choices = [fii.read_img(choice) for choice in choice_paths]
+    circle_logic_check(img_list, choices)
+    fii.show_img(choices[1])
     test_img = img_list[0][0]
     fii.show_img(test_img)
     circles = find_circles(test_img)

@@ -1,3 +1,4 @@
+from numpy.random.mtrand import noncentral_chisquare
 import shit_checker.format_iq_imgs as fii
 import shit_checker.rotate_check as rc
 import cv2
@@ -120,8 +121,8 @@ def get_cnts(img):
     _, thresh = cv2.threshold(imgray, 127, 255, 0)
     contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(contours)
-    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 80]
-    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
+    cnts = [cnt for cnt in cnts if 5 < cnt_size(cnt) < 80]
+    cnts.sort(key=lambda x: get_contour_precedence(x, img.shape[1]))
     return cnts
 
 
@@ -138,15 +139,62 @@ def find_cnt_color(image, cnt):
 
 def cnt_to_nums(img, cnts):
     num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
-    unique_cols = np.unique(num_array)
-    if len(unique_cols) == 2:
-        num_array = num_array == unique_cols[0]
     return num_array
+
+
+def correct_cols(array_list):
+    new_arrays = array_list
+    unique_cols = np.unique(np.concatenate(array_list))
+    if len(unique_cols) <= 2:
+        new_arrays = [a == unique_cols[0] for a in array_list]
+    return new_arrays
+
+
+def final_logic_guess(final_imgs, choices, func):
+    choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
+    final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
+    guess = func(*final_arrs)
+    choice_truth = [(guess == arr).all() for arr in choice_arrs]
+    return np.argmax(choice_truth) if np.any(choice_truth) else None
+
+
+def check_logic_func(a_list, final_imgs, choices, func):
+    result = [arr_check(*lst, func=func) for lst in a_list]
+    if result:
+        guess = final_logic_guess(final_imgs, choices, func)
+        return guess
+    return None
+
+
+def not_xor(src1, src2):
+    return ~np.logical_xor(src1, src2)
+
+
+def not_and(src1, src2):
+    return ~np.logical_and(src1, src2)
+
+
+def color_logic_check(img_list, choices):
+    test_list = img_list[:3]
+    final_imgs = img_list[3][:2]
+    # convert to nums
+    a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
+    a_list = [correct_cols(arrs) for arrs in a_list]
+    func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
+    for func in func_list:
+        result = check_logic_func(a_list, final_imgs, choices, func)
+        if result is not None:
+            return result
+    return None
 
 
 def convert_to_nums(img):
     cnts = get_cnts(img)
     return cnt_to_nums(img, cnts)
+
+
+def arr_check(a1, a2, target, func=np.logical_xor):
+    return np.all(func(a1, a2) == target)
 
 
 if __name__ == "__main__":
@@ -155,15 +203,18 @@ if __name__ == "__main__":
     img_path = img_paths[0]
     img = fii.read_img(img_path)
     img_list = fii.split_img(img)
+    choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
+    choices = [fii.read_img(choice) for choice in choice_paths]
     test_img = img_list[0][0]
     for boundry in BOUNDARIES:
         mask = cv2.inRange(test_img, boundry[0], boundry[1])
         print(np.sum(mask))
 
-    np.logical_xor(np.array([1, 1, 0, 1]), np.array([0, 1, 0, 1]))
+    test_img = img_list[1][0]
 
-    fii.show_img(img)
-    choice = choices[0]
+    test_row = img_list[0]
+    test_arrs = [convert_to_nums(img) for img in test_row]
+    xor_check = xor_arr_check(*test_arrs)
 
     source1 = img_list[0][0]
     source2 = img_list[0][1]
@@ -171,7 +222,6 @@ if __name__ == "__main__":
     [compare_ssim(bitstuff, choice, multichannel=True) for choice in choices]
     fii.show_img(xor_preprocess(choice))
     fii.show_img(bitstuff)
-    choice
 
     fii.show_img(quantize_image(source1, clusters=2))
 

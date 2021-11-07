@@ -1,6 +1,7 @@
 from asyncore import close_all
 from multiprocessing.connection import wait
 from pydoc import describe
+from typing import List
 import cv2
 import numpy as np
 
@@ -25,14 +26,22 @@ hsv_colors = np.array([[0, 0, 0], [0, 0, 85], [0, 0, 170], [0, 0, 255],
                        [255, 170, 170], [255, 170, 255]])
 
 
-def check_matrix(img_list, choices):
+def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
     # do some stuff
-    matrices = []
-    for row in img_list:
-        for img in row:
-            # find contours
-            matrices.append(find_shapes_in_image(img, False))
-    return matrices
+    test_cases = img_list[:3]
+    final_imgs = img_list[3][:2]
+
+    test_matrices = []
+    final_matrices = []
+    choice_matrices = []
+    for puzzle in test_cases:
+        for img in puzzle:
+            test_matrices.append(find_shapes_in_image(img, False))
+    for img in final_imgs:
+        final_matrices.append(find_shapes_in_image(img, False))
+    for img in choices:
+        choice_matrices.append(find_shapes_in_image(img, False))
+    return [test_matrices, final_matrices, choice_matrices]
 
 
 def find_nearest(array, value):
@@ -43,6 +52,9 @@ def find_nearest(array, value):
 
 def find_shapes_in_image(img, debug=False):
     used_colors = []
+    if debug:
+        cv2.imshow("threshed", img)
+        cv2.waitKey(1000)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     th, threshed = cv2.threshold(img_gray, 100, 255,
                                  cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)

@@ -66,8 +66,9 @@ def check_a_shit(img_string: str, choice_list: List[str]):
 
 def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
-    img_paths = rc.find_img_files(img_path=img_dir,
-                                  pattern="rq_1635798965816196900*.png")
+    img_paths = rc.find_img_files(
+        img_path=img_dir,
+        pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))
         img = read_img_string(img_path)

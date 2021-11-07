@@ -1,4 +1,5 @@
 import base64
+from tkinter import E
 from warnings import simplefilter
 import numpy as np
 from simpletransformers.classification import ClassificationModel, ClassificationArgs
@@ -109,7 +110,7 @@ def main(src='imdb_sup'):
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
     # this time start from previously trained model
-    pt = 'outputs-distil-roberta-lge-cont-e37/checkpoint-38776-epoch-11'
+    pt = 'outputs-distil-wt-decay-cont/checkpoint-38800'
     if src == 'imdb_sup':
         n_labels = 8
         epochs = 5
@@ -131,7 +132,14 @@ def main(src='imdb_sup'):
         model_args.early_stopping_metric = "mcc"
         model_args.early_stopping_metric_minimize = False
         model_args.early_stopping_patience = 5
-        model_args.evaluate_during_training_steps = 1000
+        model_args.evaluate_during_training_steps = 250
+        model_args.weight_decay = 0.1
+        model_args.eval_batch_size = 1000
+        model_args.evaluate_during_training = True
+        model_args.evaluate_during_training_silent = False
+        model_args.evaluate_each_epoch = False
+        model_args.evaluate_during_training_verbose = True
+        model_args.use_multiprocessing_for_evaluation = True
     # model_args.weight_decay = 0.01
     model = MyClassificationModel(m,
                                   pt,
@@ -142,7 +150,9 @@ def main(src='imdb_sup'):
     if use_conf == 'dbert3':
         model.add_pad_token()
     # Train the model
-    model.train_model(train_df, acc=sklearn.metrics.accuracy_score)
+    model.train_model(train_df,
+                      eval_df=eval_df,
+                      acc=sklearn.metrics.accuracy_score)
 
     # Evaluate the model
     result, model_outputs, wrong_predictions = model.eval_model(

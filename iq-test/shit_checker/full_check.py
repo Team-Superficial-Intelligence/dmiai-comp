@@ -9,11 +9,9 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import shit_checker.no_change_check as ncc
-<<<<<<< HEAD
+
 import shit_checker.matrix_solver as ms
-=======
 import shit_checker.GameOfLife as gl
->>>>>>> origin/uc4
 
 # import red_dot_check as rd
 # import rounding_check as ro
@@ -43,15 +41,13 @@ def check_shit(img_string: str, choice_list: List[str]):
     choices = [base64_to_cv2(choice) for choice in choice_list]
     img_list = fii.split_img(img)
 
-    func_list = [
-        (rc.check_rotations, "rotation"),
-        (ncc.check_semi_similar, "semi-similar"),
-        (gl.check_grid, "grid wuhuu"),
-        (cc.circle_logic_check, "circle color logic"),
-        (cc.color_logic_check, "color logic homie"),
-        (cc.color_logic_check, "color logic homie"),
-        (ms.check_matrix, "matrix motherfucker")
-    ]
+    func_list = [(rc.check_rotations, "rotation"),
+                 (ncc.check_semi_similar, "semi-similar"),
+                 (gl.check_grid, "grid wuhuu"),
+                 (cc.circle_logic_check, "circle color logic"),
+                 (cc.color_logic_check, "color logic homie"),
+                 (cc.color_logic_check, "color logic homie"),
+                 (ms.check_matrix, "matrix motherfucker")]
 
     for func, print_msg in func_list:
         result = check_result(img_list, choices, func, print_msg)

@@ -4,6 +4,7 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import numpy as np
+import itertools
 import cv2
 from pathlib import Path
 from typing import List
@@ -82,6 +83,35 @@ def convert_to_nums(img):
     cnts = get_cnts(img)
     return cnt_to_nums(img, cnts)
 
+def neighbors(im, i, j):
+    return [im[i-1, j-1]]
+
+def do_game_of_life(mat: np.ndarray) -> np.ndarray:
+    new_mat = mat.copy()
+    positions = itertools.product(range(new_mat.shape[0]), range(new_mat.shape[1]))
+    for pos in positions:    
+        elem = new_mat[pos[0], pos[1]]
+        if elem != 0:
+            # neighbour 0
+            if new_mat[pos[0]-1, pos[0]] == 0 and pos[0]-1 >= 0:
+                new_mat[pos[0]-1, pos[0]] = elem   
+            elif new_mat[pos[0]-1, pos[0]] != elem and pos[0]-1 >= 0:
+                new_mat[pos[0]-1, pos[0]] = 0
+            if new_mat[pos[0]+1, pos[0]] == 0 and pos[0]+1 <= mat.shape[0]:
+                new_mat[pos[0]+1, pos[0]] = elem   
+            elif new_mat[pos[0]+1, pos[0]] != elem and pos[0]+1 <= mat.shape[0]:
+                new_mat[pos[0]+1, pos[0]] = 0
+            if new_mat[pos[0], pos[1]-1] == 0 and pos[1]-1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1]-1] = elem   
+            elif new_mat[pos[0], pos[1]-1] != elem and pos[1]-1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1]-1] = 0
+            if new_mat[pos[0], pos[1]+1] == 0 and pos[1]+1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1]+1] = elem   
+            elif new_mat[pos[0], pos[1]+1] != elem and pos[1]+1 <= mat.shape[0]:
+                new_mat[pos[0], pos[1]+1] = 0
+    return new_mat
+
+
 if __name__ == "__main__":
     # reading the image in grayscale mode
     IMG_DIR = Path("../example-data/iq-test/dmi-api-test")
@@ -89,6 +119,7 @@ if __name__ == "__main__":
 
     img_files = list(IMG_DIR.glob("*image*.png"))
 
+    mat = np.random.random_integers(0, 2, (4, 4))
     img_path = img_files[0]
     test_img = fii.read_img(img_path)
     image_list = fii.split_img(test_img)

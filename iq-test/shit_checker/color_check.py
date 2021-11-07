@@ -138,6 +138,7 @@ def count_color(img, bound):
     """ Checks how much of a color is in an img """
     return np.sum(cv2.inRange(img, bound[0], bound[1]))
 
+
 def max_color(img):
     bnd_count = [count_color(img, bound) for bound in BOUNDARIES]
     return np.argmax(bnd_count)
@@ -148,6 +149,7 @@ def find_cnt_color(image, cnt):
     x, y, w, h = cv2.boundingRect(cnt)
     img_crop = image[y : y + h, x : x + w]
     return max_color(img_crop)
+
 
 def find_circle_color(img, circ):
     xmin = circ[0] - circ[2]
@@ -220,6 +222,30 @@ def arr_check(a1, a2, target, func=np.logical_xor):
     return np.all(func(a1, a2) == target)
 
 
+def find_circles(img):
+    gray = to_gray(img)
+    minDist = 40
+    param1 = 50  # 500
+    param2 = 20  # 200 #smaller value-> more false circles
+    minRadius = 4
+    maxRadius = 20  # 10
+    circles = cv2.HoughCircles(
+        gray,
+        cv2.HOUGH_GRADIENT,
+        1,
+        minDist,
+        param1=param1,
+        param2=param2,
+        minRadius=minRadius,
+        maxRadius=maxRadius,
+    )
+    if circles is None:
+        return None
+    circles = list(np.round(circles[0, :]).astype("int"))
+    circles.sort(key=lambda x: calc_precedence(x[0], x[1], img.shape[1]))
+    return circles
+
+
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
@@ -229,10 +255,12 @@ if __name__ == "__main__":
     choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
     choices = [fii.read_img(choice) for choice in choice_paths]
     test_img = img_list[0][0]
-    for boundry in BOUNDARIES:
-        mask = cv2.inRange(test_img, boundry[0], boundry[1])
-        print(np.sum(mask))
-    test_img = img_list[0][0]
+    fii.show_img(test_img)
+    circles = find_circles(test_img)
+    for (x, y, r) in circles:
+        output = test_img.copy()
+        circle_img = cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+        fii.show_img(output)
     cnts = get_cnts(test_img)
     for cnt in cnts:
         new_img = cv2.drawContours(test_img.copy(), [cnt], -1, (0, 255, 0), 2)
@@ -243,13 +271,13 @@ if __name__ == "__main__":
         to_gray(test_img), 25
     )  # cv2.bilateralFilter(gray,10,50,50)
     fii.show_img(blurred)
+
     minDist = 40
     param1 = 50  # 500
     param2 = 1  # 200 #smaller value-> more false circles
     minRadius = 4
     maxRadius = 20  # 10
     fii.show_img
-
     # docstring of HoughCircles: HoughCircles(image, method, dp, minDist[, circles[, param1[, param2[, minRadius[, maxRadius]]]]]) -> circles
     circles = cv2.HoughCircles(
         to_gray(test_img),
@@ -261,6 +289,7 @@ if __name__ == "__main__":
         minRadius=minRadius,
         maxRadius=maxRadius,
     )
+
     output = test_img.copy()
     if circles is not None:
         # convert the (x, y) coordinates and radius of the circles to integers
@@ -273,6 +302,8 @@ if __name__ == "__main__":
             circle_img = cv2.circle(output, (x, y), r, (0, 255, 0), 4)
             fii.show_img(output)
             # cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
+    [find_circle_color(test_img, circle) for circle in circles]
 
     fii.show_img(np.hstack(output))
     test_row = img_list[0]

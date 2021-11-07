@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseSettings
 from dotenv import load_dotenv
 from argparse import ArgumentParser
-from dtos.responses import  ActionType
+from dtos.responses import ActionType
 
 
 class Settings(BaseSettings):
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     step = 0
     results_log = []
     lane = 0
-    
+    auto = "left"
 
 
 def load_env():

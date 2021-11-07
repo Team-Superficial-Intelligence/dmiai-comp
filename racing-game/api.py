@@ -63,11 +63,18 @@ def predict(response: PredictRequest) -> PredictResponse:
         r.sensors.front = 1000
     if r.sensors.back is None:
         r.sensors.back = 1000
+    if r.sensors.left_front is None:
+        r.sensors.left_front = 1000
+    if r.sensors.right_front is None:
+        r.sensors.right_front = 1000
+    if r.sensors.left_back is None:
+        r.sensors.left_back = 1000
+    if r.sensors.right_back is None:
+        r.sensors.right_back = 1000
 
     action = a.ACCELERATE
     front_lim = 900
-    speed_lim = 5000
-    auto = "left"
+    speed_lim = 1000
 
     if s.start_timing < 0:
         s.avoid_front = False
@@ -81,57 +88,57 @@ def predict(response: PredictRequest) -> PredictResponse:
             action = a.DECELERATE
 
         # Handle shifting lanes action start
-        if r.sensors.front < front_lim and r.velocity.x < speed_lim:
+        if r.sensors.front < front_lim and r.velocity.x < speed_lim or r.sensors.back < 200:
+            # Check sensors if there is space on the left
+            print(f'Eval: {s.lane}')
+            if s.lane == "mid":
+                if r.sensors.left_side < 300 or r.sensors.left_front < 500:
+                    s.auto = "right"
+                    s.lane = "right"
+                else:
+                    s.auto = "left"
+                    s.lane = "left"
+            elif s.lane == "left":
+                if r.sensors.right_side < 300 or r.sensors.right_front < 500:
+                    s.auto = "decelerate"
+                else:
+                    s.auto = "right"
+                    s.lane = "mid"
+            elif s.lane == "right":
+                s.auto = "left"
+                s.lane = "mid"
             s.start_timing = s.step
             s.avoid_front = True
+            print(
+                f'{b.OK}Step: {s.step - s.start_timing}, lane: {s.lane}, action: {s.auto}{b.END}')
         elif r.sensors.back < 200 and r.sensors.front > front_lim:
             action = a.ACCELERATE
-        elif r.sensors.back < 200:
-            s.start_timing = s.step
-            s.avoid_front = True
     else:
-        lane_free = False
-
-        # Check if the lane is free using sensors
-
-        # Check sensors if there is space on the left
-        if s.lane == "mid":
-            auto = "left"
-            # if r.sensors.left_side < 200 or r.sensors.left_front < 400:
-            #     auto = "right"
-            # else:
-            #     auto = "left"
-        elif s.lane == "left":
-            auto = "right"
-        elif s.lane == "right":
-            auto = "left"
-
         # Do that action yo
-        if s.step < s.start_timing + 15:
-            action = a.STEER_LEFT if auto == "left" else a.STEER_RIGHT
-        elif s.step <= s.start_timing + 20:
-            action = a.ACCELERATE
-        elif s.step > s.start_timing + 20 and r.velocity.y != 0:
-            if auto == "left":
-                if r.velocity.y < 0:
-                    action = a.STEER_RIGHT
-                elif r.velocity.y > 0:
-                    ation = a.STEER_LEFT
-            elif auto == "right":
-                if r.velocity.y > 0:
-                    action = a.STEER_LEFT
-                elif r.velocity.y < 0:
-                    ation = a.STEER_RIGHT
-        elif s.step > s.start_timing + 50:
+        if s.auto == "left" or s.auto == "right":
+            if s.step < s.start_timing + 15:
+                action = a.STEER_LEFT if s.auto == "left" else a.STEER_RIGHT
+            elif s.step <= s.start_timing + 20:
+                if r.sensors.front > front_lim:
+                    action = a.ACCELERATE
+                else:
+                    action = a.DECELERATE
+            elif s.step > s.start_timing + 20 and r.velocity.y != 0:
+                if s.auto == "left":
+                    if r.velocity.y < 0:
+                        action = a.STEER_RIGHT
+                    elif r.velocity.y > 0:
+                        ation = a.STEER_LEFT
+                elif s.auto == "right":
+                    if r.velocity.y > 0:
+                        action = a.STEER_LEFT
+                    elif r.velocity.y < 0:
+                        ation = a.STEER_RIGHT
+            elif s.step > s.start_timing + 40:
+                s.avoid_front = False
+        elif s.auto == "decelerate":
+            action = a.DECELERATE
             s.avoid_front = False
-            if s.lane == "mid":
-                s.lane = "left"
-            elif s.lane == "left":
-                s.lane = "mid"
-            elif s.lane == "right":
-                s.lane = "mid"
-        print(
-            f'{b.OK}Step: {s.step - s.start_timing}, action: {action}{b.END}')
 
     s.step += 1
     if r.did_crash or r.elapsed_time_ms < 5:

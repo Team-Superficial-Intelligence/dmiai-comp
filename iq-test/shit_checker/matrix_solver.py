@@ -36,7 +36,9 @@ def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
     choice_matrices = []
     for puzzle in test_cases:
         for img in puzzle:
-            test_matrices.append(find_shapes_in_image(img, False))
+            puzzles = []
+            puzzles.append(find_shapes_in_image(img, False))
+        test_matrices.append(puzzles)
     for img in final_imgs:
         final_matrices.append(find_shapes_in_image(img, False))
     for img in choices:

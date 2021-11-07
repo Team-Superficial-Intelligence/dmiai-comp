@@ -2,7 +2,10 @@
 Checks whether we have the right dataset
 """
 from pathlib import Path
+from typing import List, Tuple
 import cv2
+import itertools
+from PIL import Image
 import numpy as np
 import xml.etree.ElementTree as ET
 
@@ -44,8 +47,22 @@ def read_img(img_path):
     return cv2.imread(str(img_path))
 
 
+def split_img_matrix(input_img: Image, img_size=(300, 300)) -> List[np.ndarray]:
+    img = np.array(input_img)
+    width = int(img.shape[1] / img_size[1])
+    height = int(img.shape[0] / img_size[0])
+    positions = list(itertools.product(range(height), range(width)))
+    return [crop_img2(img, pos) for pos in positions], positions
+
+
 def crop_img(img, bbox):
     return img[bbox[1] : bbox[3], bbox[0] : bbox[2]]
+
+
+def crop_img2(img: np.ndarray, pos: Tuple[int], img_size=(300, 300)) -> np.ndarray:
+    x = pos[1] * img_size[1]
+    y = pos[0] * img_size[0]
+    return img[y : y + img_size[0], x : x + img_size[1]]
 
 
 def to_gray(img):
@@ -71,13 +88,19 @@ for j, template in enumerate(crop_list):
             break
 
 
-test_img = read_img(next(IMG_DIR.glob("*pirate2*")))
+test_img = to_gray(read_img(next(IMG_DIR.glob("*pirate2*"))))
 
-test_img = test_img.shape
+test_path = next(ANN_IMGS.glob("*665.png"))
+test_template = to_gray(read_img(test_path))
+show_img(test_img)
+img_list, positions = split_img_matrix(test_template)
+match_template(test_img, img_list[3])
 
-match_template(to_gray(test_img), crop_list[3])
 
-show_img(crop_list[3])
+len(img_list)
+img_list[1]
+show_img(img_list[3])
 show_img(to_gray(test_img))
 
 crop_list[3].shape
+testy = to_gray(read_img(next(IMG_DIR.glob("*octo*"))))

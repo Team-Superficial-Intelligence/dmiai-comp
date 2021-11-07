@@ -73,7 +73,7 @@ def predict(response: PredictRequest) -> PredictResponse:
 
     action = a.ACCELERATE
     front_lim = 900
-    speed_lim = 2000
+    speed_lim = 1500
 
     if s.start_timing < 0:
         s.avoid_front = False

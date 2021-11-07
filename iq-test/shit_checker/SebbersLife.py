@@ -90,7 +90,10 @@ def check_gol_row(new_matrices):
 
 def check_gol(row_case: List[np.ndarray]) -> bool:
     new_matrices = [format_matrix(mat) for mat in row_case]
-    return check_gol_row(new_matrices)
+    try:
+        return check_gol_row(new_matrices)
+    except IndexError:
+        return False
 
 
 def check_all_gol(img_list, choices):

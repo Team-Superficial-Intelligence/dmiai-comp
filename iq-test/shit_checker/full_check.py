@@ -9,9 +9,9 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import shit_checker.no_change_check as ncc
-
-import shit_checker.matrix_solver as ms
 import shit_checker.GameOfLife as gl
+import shit_checker.matrix_solver as ms
+import shit_checker.SebbersLife as sl
 
 # import red_dot_check as rd
 # import rounding_check as ro
@@ -41,13 +41,14 @@ def check_shit(img_string: str, choice_list: List[str]):
     choices = [base64_to_cv2(choice) for choice in choice_list]
     img_list = fii.split_img(img)
 
-    func_list = [(rc.check_rotations, "rotation"),
-                 (ncc.check_semi_similar, "semi-similar"),
-                 (gl.check_grid, "grid wuhuu"),
-                 (cc.circle_logic_check, "circle color logic"),
-                 (cc.color_logic_check, "color logic homie"),
-                 (cc.color_logic_check, "color logic homie"),
-                 (ms.check_matrix, "matrix motherfucker")]
+    func_list = [
+        (rc.check_rotations, "rotation"),
+        (ncc.check_semi_similar, "semi-similar"),
+        (sl.check_all_gol, "game of life!"),
+        (gl.check_grid, "grid wuhuu"),
+        (cc.circle_logic_check, "circle color logic"),
+        (cc.color_logic_check, "color logic homie"),
+    ]
 
     for func, print_msg in func_list:
         result = check_result(img_list, choices, func, print_msg)
@@ -70,8 +71,8 @@ def check_a_shit(img_string: str, choice_list: List[str]):
 def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(
-        img_path=img_dir,
-        pattern="rq_1635798965381646400_image_356243069114892252.png")
+        img_path=img_dir, pattern="rq_1635798965381646400_image_356243069114892252.png"
+    )
     # pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))
@@ -89,8 +90,12 @@ def test_shit():
 if __name__ == "__main__":
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=img_dir)
+    img_path = img_paths[3]
     for img_path in img_paths:
-        img = read_img_string(img_path)
+        img_string = read_img_string(img_path)
+        fii.show_img(base64_to_cv2(img_string))
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
-        choices = [read_img_string(img_file) for img_file in choice_paths]
-        print(check_shit(img, choices))
+        choice_list = [read_img_string(img_file) for img_file in choice_paths]
+        answer = check_shit(img_string, choice_list)
+        check_shit()
+        fii.show_img(base64_to_cv2(choice_list[answer]))

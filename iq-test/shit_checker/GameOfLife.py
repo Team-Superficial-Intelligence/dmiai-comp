@@ -126,14 +126,11 @@ if __name__ == "__main__":
     # reading the image in grayscale mode
     IMG_DIR = Path("../example-data/iq-test/dmi-api-test")
     IMG_DIR.exists()
-
     img_files = list(IMG_DIR.glob("*image*.png"))
-
     mat = np.random.random_integers(0, 2, (4, 4))
     img_path = img_files[0]
     test_img = fii.read_img(img_path)
     image_list = fii.split_img(test_img)
-
     choices = [
         fii.read_img(choice)
         for choice in rc.find_img_choices(img_path, img_dir=IMG_DIR)

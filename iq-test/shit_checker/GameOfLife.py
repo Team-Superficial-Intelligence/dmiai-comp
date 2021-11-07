@@ -52,27 +52,44 @@ def ultimate_mask(img):
     masks = [cv2.inRange(img, bound[0], bound[1]) for bound in boundaries]
     return functools.reduce(cv2.bitwise_or, masks)
 
+
+def count_color(img, bound):
+    return np.sum(cv2.inRange(img, bound[0], bound[1]))
+def find_cnt_color(img, col):
+    x, y, w, h = cv2.boundingRect(cnt)
+    img_crop = image[y:y+h, x:x+w]
+    bnd_count = [count_color(img_crop, bound) for bound in cc.BOUNDARIES]
+    return np.argmax(bnd_count)
+
 if __name__ == "__main__":
     # reading the image in grayscale mode
-    os.getcwd()
     IMG_DIR = Path("../example-data/iq-test/dmi-api-test")
     IMG_DIR.exists()
 
     img_files = list(IMG_DIR.glob("*image*.png"))
 
-    test_img = fii.read_img(img_files[4])
+    img_path = img_files[0]
+    test_img = fii.read_img(img_path)
     image_list = fii.split_img(test_img)
 
-    img_path = img_files[4]
     choices = [
         fii.read_img(choice)
         for choice in rc.find_img_choices(img_path, img_dir=IMG_DIR)
     ]
-    image_list = fii.split_img(fii.read_img(img_path))
     # Image to alter
 
     image = image_list[0][1]
     fii.show_img(image)
+    imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, thresh = cv2.threshold(imgray, 127, 255, 0)
+    contours= cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    fii.show_img(thresh)
+    cnts = imutils.grab_contours(contours)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt)<80]  
+    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
+    
+    cnt = cnts[0]
+
 
     shapeMask = ultimate_mask(image) 
     cnts = cv2.findContours(shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

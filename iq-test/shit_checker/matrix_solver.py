@@ -59,7 +59,7 @@ def get_matrix_representations(img_list, choices) -> Union[List, None]:
 def find_nearest(array, value):
     array = np.asarray(array)
     if type(value) == np.ndarray or type(value) == tuple:
-        idx = (np.abs(array - value).sum(axis=1).argmin())
+        idx = np.abs(array - value).sum(axis=1).argmin()
         return idx
     return (np.abs(array - value)).argmin()
 
@@ -112,15 +112,15 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
         cv2.drawContours(mask, [c], -1, 0, 2)
         threshed = cv2.bitwise_and(threshed, threshed, mask=mask)
 
-    #cv2.drawContours(threshed, cnts, -1, (0, 255, 0), 3)
+    # cv2.drawContours(threshed, cnts, -1, (0, 255, 0), 3)
 
-    #cnts = cv2.findContours(threshed, cv2.RETR_LIST,
+    # cnts = cv2.findContours(threshed, cv2.RETR_LIST,
     #                        cv2.CHAIN_APPROX_SIMPLE)[-2]
     # if debug:
     #     # cv2.drawContours(threshed, cnts, -1, (0, 255, 0), 3)
     #     cv2.imshow('Contours', threshed)
     #     cv2.waitKey(1000)
-    #grid_points = len(cnts)
+    # grid_points = len(cnts)
     mindist = round(threshed.shape[0] / 8)
     maxr = round(threshed.shape[0] / 8)
     circles = cv2.HoughCircles(threshed,
@@ -178,12 +178,12 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
             x = circle[0] - 2
             y = circle[1] + ceil(circle[2] / 1.5)
 
-            #cnt_img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0),
+            # cnt_img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0),
             #                        2)
-            #cnt_img = cv2.circle(img, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
+            # cnt_img = cv2.circle(img, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
             cnt_img = img[y:y + h, x:x + w]
             if debug:
-                cv2.imshow('Contours', cnt_img)
+                cv2.imshow("Contours", cnt_img)
                 cv2.waitKey(0)
             # cnt_hsv = cv2.cvtColor(cnt_img, cv2.COLOR_BGR2HSV)
             # cnt_img = adjust_gamma(cnt_img, 1.2)

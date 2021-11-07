@@ -13,7 +13,7 @@ hsv_colors = np.array([[190, 0, 10], [80, 160, 205], [190, 140, 80],
 
 def check_matrix(img_list, choices) -> None:
     matrices = get_matrix_representations(img_list, choices)
-
+    return None
     if matrices is None:
         return None
     else:
@@ -36,7 +36,7 @@ def get_matrix_representations(img_list, choices) -> Union[List, None]:
         for img in puzzle:
             matrix, used_colors = find_shapes_in_image(img, used_colors, False)
             if matrix is not None:
-                puzzles.append(puzzles)
+                puzzles.append(matrix)
                 found_matrix = True
         if len(puzzles) > 0:
             test_matrices.append(puzzles)
@@ -128,7 +128,7 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
                                1,
                                mindist,
                                param1=150,
-                               param2=7,
+                               param2=6.5,
                                minRadius=0,
                                maxRadius=maxr)
 
@@ -175,7 +175,7 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
             # only take radius /2, not full width
             w = ceil(circle[2] / 5)
             h = w
-            x = circle[0] + 1
+            x = circle[0] - 2
             y = circle[1] + ceil(circle[2] / 1.5)
 
             #cnt_img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0),
@@ -186,7 +186,7 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
                 cv2.imshow('Contours', cnt_img)
                 cv2.waitKey(0)
             # cnt_hsv = cv2.cvtColor(cnt_img, cv2.COLOR_BGR2HSV)
-            # cnt_hsv = adjust_gamma(cnt_hsv, 0.8)
+            # cnt_img = adjust_gamma(cnt_img, 1.2)
             # cnt_hsv_avg = np.average(cnt_hsv, axis=0).astype(np.uint8)
             # cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
             # cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)

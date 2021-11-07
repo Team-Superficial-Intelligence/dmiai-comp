@@ -70,6 +70,8 @@ def find_match(target_img, img_list):
     target_img = to_gray(np.array(target_img))
     locs, confs = template_search(target_img, img_list)
     best_idx = np.argmax(confs)
+    if len(confs) == 0:
+        return (750, 750)
     return format_loc(locs[best_idx], img_list[best_idx]), img_list[best_idx]
 
 

@@ -35,7 +35,6 @@ middleware.cors.setup(app)
 # Actions = avoid car front
 s.start_timing = 0
 s.avoid_front = False
-s.block_avoid_front_change = False
 s.action_timing = 0
 s.action_choice = a.ACCELERATE
 s.lane = "mid"
@@ -140,14 +139,18 @@ def predict(response: PredictRequest) -> PredictResponse:
             action = a.DECELERATE
             s.avoid_front = False
 
+    if s.step % 500 == 0:
+        print(
+            f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {s.distance}\n\t{b.END}')
+
     s.step += 1
     if r.did_crash or r.elapsed_time_ms < 5:
         s.results_log.append(
             {
-                'step': s.step,
-                'action': action,
-                'crash': r.did_crash,
-                'time': r.elapsed_time_ms
+                'steps': s.step,
+                'last_action': action,
+                'did_crash': r.did_crash,
+                'distance': r.distance,
             }
         )
         print(f'Results {s.results_log[-1]}')

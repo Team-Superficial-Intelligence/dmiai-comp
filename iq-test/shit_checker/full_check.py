@@ -68,7 +68,8 @@ def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(
         img_path=img_dir,
-        pattern="rq_1635798965816196900_image_5462613357368331411.png")
+        pattern="rq_1635798965381646400_image_356243069114892252.png")
+    #pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))
         img = read_img_string(img_path)

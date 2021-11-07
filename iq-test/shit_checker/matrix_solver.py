@@ -1,4 +1,5 @@
 from asyncore import close_all
+from math import ceil, floor, sqrt
 from multiprocessing.connection import wait
 from pydoc import describe
 from typing import List
@@ -6,24 +7,8 @@ import cv2
 import numpy as np
 
 # HSV colors
-hsv_colors = np.array([[0, 0, 0], [0, 0, 85], [0, 0, 170], [0, 0, 255],
-                       [0, 85, 0], [0, 85, 85], [0, 85, 170], [0, 85, 255],
-                       [0, 170, 0], [0, 170, 85], [0, 170, 170], [0, 170, 255],
-                       [0, 255, 0], [0, 255, 85], [0, 255, 170], [0, 255, 255],
-                       [85, 0, 0], [85, 0, 85], [85, 0, 170], [85, 0, 255],
-                       [85, 85, 0], [85, 85, 85], [85, 85, 170], [85, 85, 255],
-                       [85, 170, 0], [85, 170, 85], [85, 170, 170],
-                       [85, 170, 255], [85, 255, 0], [85, 255, 85],
-                       [85, 255, 170], [85, 255, 255],
-                       [170, 0, 0], [170, 0, 85], [170, 0, 170], [170, 0, 255],
-                       [170, 85, 0], [170, 85, 85], [170, 85, 170],
-                       [170, 85, 255], [170, 170, 0], [170, 170, 85],
-                       [170, 170, 170], [170, 170, 255], [170, 255, 0],
-                       [170, 255, 85], [170, 255, 170], [170, 255, 255],
-                       [255, 0, 0], [255, 0, 85], [255, 0, 170], [255, 0, 255],
-                       [255, 85, 0], [255, 85, 85], [255, 85, 170],
-                       [255, 85, 255], [255, 170, 0], [255, 170, 85],
-                       [255, 170, 170], [255, 170, 255]])
+hsv_colors = np.array([[190, 0, 10], [80, 160, 205], [190, 140, 80],
+                       [80, 156, 58]])
 
 
 def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
@@ -34,74 +19,159 @@ def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
     test_matrices = []
     final_matrices = []
     choice_matrices = []
+    used_colors = []
     for puzzle in test_cases:
+        puzzles = []
         for img in puzzle:
-            puzzles = []
-            puzzles.append(find_shapes_in_image(img, False))
+            matrix, used_colors = find_shapes_in_image(img, used_colors, False)
+            puzzles.append(matrix)
         test_matrices.append(puzzles)
     for img in final_imgs:
-        final_matrices.append(find_shapes_in_image(img, False))
+        matrix, used_colors = find_shapes_in_image(img, used_colors, False)
+        final_matrices.append(matrix)
     for img in choices:
-        choice_matrices.append(find_shapes_in_image(img, False))
-    return [test_matrices, final_matrices, choice_matrices]
+        matrix, used_colors = find_shapes_in_image(img, used_colors)
+        choice_matrices.append(matrix)
+    return test_matrices, final_matrices, choice_matrices
 
 
 def find_nearest(array, value):
     array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
+    if type(value) == np.ndarray or type(value) == tuple:
+        idx = (np.abs(array - value).sum(axis=1).argmin())
+        return idx
+    return (np.abs(array - value)).argmin()
 
 
-def find_shapes_in_image(img, debug=False):
-    used_colors = []
-    if debug:
-        cv2.imshow("threshed", img)
-        cv2.waitKey(1000)
+def get_dominant_color(pixels, clusters, attempts):
+    """
+    Given a (N, Channels) array of pixel values, compute the dominant color via K-means
+    """
+    clusters = min(clusters, len(pixels))
+    flags = cv2.KMEANS_RANDOM_CENTERS
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_MAX_ITER, 1, 10)
+    _, labels, centroids = cv2.kmeans(pixels.astype(np.float32), clusters,
+                                      None, criteria, attempts, flags)
+    _, counts = np.unique(labels, return_counts=True)
+    dominant = centroids[np.argmax(counts)]
+    return dominant
+
+
+def adjust_gamma(image, gamma=1.0):
+    # build a lookup table mapping the pixel values [0, 255] to
+    # their adjusted gamma values
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0)**invGamma) * 255
+                      for i in np.arange(0, 256)]).astype("uint8")
+    # apply gamma correction using the lookup table
+    return cv2.LUT(image, table)
+
+
+def find_shapes_in_image(img, used_colors=None, debug=False):
+    if used_colors is None:
+        used_colors = []
+
+    # img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    th, threshed = cv2.threshold(img_gray, 100, 255,
+
+    img_gray = adjust_gamma(img_gray, 0.3)
+
+    th, threshed = cv2.threshold(img_gray, 150, 255,
                                  cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-    if debug:
-        cv2.imshow("threshed", threshed)
-        cv2.waitKey(1000)
-
-    # get image dimensions
-    height, width = threshed.shape
-    rowsize = round(height / 6)
-    colsize = round(width / 6)
-
-    rows = np.array(range(rowsize, height - round(rowsize / 2), rowsize))
-    cols = np.array(range(colsize, width - round(rowsize / 2), colsize))
+    # cv2.floodFill(threshed, None, (0, 0), 255)
+    # cv2.floodFill(threshed, None, (0, 0), 0)
 
     cnts = cv2.findContours(threshed, cv2.RETR_LIST,
                             cv2.CHAIN_APPROX_SIMPLE)[-2]
-    matrix = np.zeros((5, 5))
-    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
-    # sort by row
-    (cnts, boundingBoxes) = zip(
-        *sorted(zip(cnts, boundingBoxes), key=lambda b: b[1][0]))
-    # sort by column
-    boundingBoxes = [cv2.boundingRect(c) for c in cnts]
-    (cnts, boundingBoxes) = zip(
-        *sorted(zip(cnts, boundingBoxes), key=lambda b: b[1][1]))
-    for cnt in cnts:
-        M = cv2.moments(cnt)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
-        row = find_nearest(rows, cY)
-        col = find_nearest(cols, cX)
-        # add to matrix if area is big enough
-        if cv2.contourArea(cnt) > 20:
+
+    c = max(cnts, key=cv2.contourArea)
+    # check for image border (must be greater than half the area)
+    if cv2.contourArea(c) > (threshed.shape[0] * threshed.shape[1] / 2):
+        mask = np.ones(threshed.shape[:2], dtype="uint8") * 255
+        cv2.drawContours(mask, [c], -1, 0, 2)
+        threshed = cv2.bitwise_and(threshed, threshed, mask=mask)
+
+    #cv2.drawContours(threshed, cnts, -1, (0, 255, 0), 3)
+
+    #cnts = cv2.findContours(threshed, cv2.RETR_LIST,
+    #                        cv2.CHAIN_APPROX_SIMPLE)[-2]
+    # if debug:
+    #     # cv2.drawContours(threshed, cnts, -1, (0, 255, 0), 3)
+    #     cv2.imshow('Contours', threshed)
+    #     cv2.waitKey(1000)
+    #grid_points = len(cnts)
+    mindist = round(threshed.shape[0] / 8)
+    maxr = round(threshed.shape[0] / 8)
+    circles = cv2.HoughCircles(threshed,
+                               cv2.HOUGH_GRADIENT,
+                               1,
+                               mindist,
+                               param1=150,
+                               param2=7,
+                               minRadius=0,
+                               maxRadius=maxr)
+
+    circles = np.uint16(np.around(circles))
+    circles = circles[0, :]
+
+    grid_points = len(circles)
+
+    row_count = int(sqrt(grid_points))
+    col_count = row_count
+
+    # get image dimensions
+    height, width = threshed.shape
+    rowsize = floor(height / (row_count + 1))
+    colsize = floor(width / (col_count + 1))
+
+    rows = np.array(range(rowsize, height - ceil(rowsize / row_count),
+                          rowsize))
+    cols = np.array(range(colsize, width - ceil(colsize / col_count), colsize))
+    matrix = np.zeros((row_count, col_count))
+
+    # boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    # sort by col, row
+    circles = sorted(circles, key=lambda x: (x[1], x[0]))
+
+    smallest_circle = min(circles, key=lambda x: x[2])
+    smallest_circle_raidus = smallest_circle[2]
+
+    largest_circle = max(circles, key=lambda x: x[2])
+    largest_circle_radius = largest_circle[2]
+    boundary = floor(smallest_circle_raidus +
+                     (largest_circle_radius - smallest_circle_raidus) / 2)
+    for circle in circles:
+
+        # add to matrix if radius is large enough
+        if circle[2] > boundary:
+            col = find_nearest(cols, circle[0])
+            row = find_nearest(rows, circle[1])
             # get contents of contour from img
-            x, y, w, h = cv2.boundingRect(cnt)
-            cnt_img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0),
-                                    2)
-            cnt_hsv = cv2.cvtColor(cnt_img, cv2.COLOR_BGR2HSV)
-            cnt_hsv_avg = np.average(cnt_hsv, axis=0).astype(np.uint8)
-            cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
+            # only take radius /2, not full width
+            w = ceil(circle[2] / 5)
+            h = w
+            x = circle[0] + 1
+            y = circle[1] + ceil(circle[2] / 1.5)
+
+            #cnt_img = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0),
+            #                        2)
+            #cnt_img = cv2.circle(img, (circle[0], circle[1]), circle[2], (0, 255, 0), 2)
+            cnt_img = img[y:y + h, x:x + w]
+            if debug:
+                cv2.imshow('Contours', cnt_img)
+                cv2.waitKey(0)
+            # cnt_hsv = cv2.cvtColor(cnt_img, cv2.COLOR_BGR2HSV)
+            # cnt_hsv = adjust_gamma(cnt_hsv, 0.8)
+            # cnt_hsv_avg = np.average(cnt_hsv, axis=0).astype(np.uint8)
             # cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
+            # cnt_hsv_avg = np.average(cnt_hsv_avg, axis=0).astype(np.uint8)
+            cnt_bgr_avg = cnt_img.mean(axis=0).mean(
+                axis=0)  # cnt_hsv.mean(axis=0)
+            cnt_rgb_avg = np.array([(cnt_bgr_avg[2], cnt_bgr_avg[1],
+                                     cnt_bgr_avg[0])])
             # get index of nearest color from hsv_colors
-            cnt_index = find_nearest(hsv_colors, cnt_hsv_avg)
+            cnt_index = find_nearest(hsv_colors, cnt_rgb_avg)
             if cnt_index not in used_colors:
                 used_colors.append(cnt_index)
             matrix[row][col] = used_colors.index(cnt_index) + 1
-    return matrix
+    return matrix, used_colors

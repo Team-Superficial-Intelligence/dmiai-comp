@@ -1,4 +1,3 @@
-
 import uvicorn
 from fastapi import FastAPI
 from starlette.responses import HTMLResponse
@@ -11,9 +10,18 @@ from dtos.responses import PredictResponse
 from settings import Settings, load_env
 from static.render import render
 from utilities.utilities import get_uptime
-import random
+
+# from ml.emily import Emily
+
+from letswatchafilm import load_model, predict_stars
+import json
+import time
+
+# emily = Emily()
 
 load_env()
+model = load_model(
+    pt_dir='outputs-distil-roberta-lge-cont-e37/checkpoint-37728-epoch-10')
 
 # --- Welcome to your Emily API! --- #
 # See the README for guides on how to test it.
@@ -22,7 +30,6 @@ load_env()
 # are accessible from any origin by default.
 # Make sure to restrict access below to origins you
 # trust before deploying your API to production.
-
 
 app = FastAPI()
 settings = Settings()
@@ -33,14 +40,28 @@ middleware.cors.setup(app)
 
 @app.post('/api/predict', response_model=PredictResponse)
 def predict(request: PredictRequest) -> PredictResponse:
-
+    # f = open("./data/req_1636029039417787700.json", "r")
+    # ratings = json.load(f)
     # You receive all reviews as plaintext in the request.
     # Return a list of predicted ratings between 1-5 (inclusive).
     # You must return the same number of ratings as there are reviews, and each
     # rating will be associated with the review at the same index in the request list.
-
-    ratings = [random.uniform(0.5, 5.0) for review in request.reviews]
+    req_group = str(time.time_ns())
+    f = open("./data/req_{}.json".format(req_group), "w")
+    tstart = time.time()
+    ratings = predict_stars(model, request.reviews)
+    tend = time.time()
+    print("time for {} predictions: {}".format(len(request.reviews),
+                                               tend - tstart))
+    json.dump(ratings, f)
+    f.close()
     return PredictResponse(ratings=ratings)
+
+
+# @app.get('/superfuntime')
+# def superfuntime():
+#     tok = emily.superfuntime()
+#     return HTMLResponse(str(tok))
 
 
 @app.get('/api')
@@ -54,18 +75,11 @@ def hello():
 @app.get('/')
 def index():
     return HTMLResponse(
-        render(
-            'static/index.html',
-            host=settings.HOST_IP,
-            port=settings.CONTAINER_PORT
-        )
-    )
+        render('static/index.html',
+               host=settings.HOST_IP,
+               port=settings.CONTAINER_PORT))
 
 
 if __name__ == '__main__':
 
-    uvicorn.run(
-        'api:app',
-        host=settings.HOST_IP,
-        port=settings.CONTAINER_PORT
-    )
+    uvicorn.run('api:app', host=settings.HOST_IP, port=settings.CONTAINER_PORT)

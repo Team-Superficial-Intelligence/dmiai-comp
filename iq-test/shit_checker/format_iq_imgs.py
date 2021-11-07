@@ -26,7 +26,7 @@ def split_img(img: np.ndarray, fig_size=(110, 110)) -> List[List[np.ndarray]]:
     for h_pos, w_pos in positions:
         x = w_pos * fig_size[0]
         y = h_pos * fig_size[1]
-        new_img = img[y : y + fig_size[1], x : x + fig_size[0], :]
+        new_img = img[y:y + fig_size[1], x:x + fig_size[0], :]
         try:
             result_list[h_pos][w_pos] = new_img
         except IndexError:
@@ -47,4 +47,3 @@ if __name__ == "__main__":
     show_img(img)
     img_list = split_img(img)
     show_img(img_list[0][2])
-

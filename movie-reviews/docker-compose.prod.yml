@@ -15,7 +15,6 @@ services:
       dockerfile: ./Dockerfile
     volumes:
       - .:/workspace:cached
-      - ./review_data:/workspace/data
 
     runtime: ${RUNTIME}
     environment:

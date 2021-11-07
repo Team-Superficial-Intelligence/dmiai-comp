@@ -16,9 +16,11 @@ green = (np.array([20, 100, 40]), np.array([120, 255, 140]))
 yellow = (np.array([0, 100, 155]), np.array([100, 150, 255]))
 # Blue color boundaries [B, G, R]
 blue = (np.array([120, 120, 30]), np.array([230, 200, 205]))
-
 red = (np.array([0, 0, 50]), np.array([30, 30, 200]))
-BOUNDARIES = [green, yellow, blue, red]
+black = (np.array([0, 0, 0]), np.array([50, 50, 50]))
+white = (np.array([210, 210, 210]), np.array([255, 255, 255]))
+
+BOUNDARIES = [green, yellow, blue, red, black, white]
 
 
 def to_gray(img):
@@ -111,11 +113,14 @@ def cnt_size(cnt) -> int:
     return w
 
 
-def get_contour_precedence(contour, cols):
+def calc_precedence(x, y, cols, tolerance_factor=10):
+    return ((y // tolerance_factor) * tolerance_factor) * cols + x
+
+
+def get_contour_precedence(contour, cols: int):
     """ Sorts the contours from top left to bottom right"""
-    tolerance_factor = 10
     origin = cv2.boundingRect(contour)
-    return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
+    return calc_precedence(origin[0], origin[1], cols)
 
 
 def get_cnts(img):
@@ -133,13 +138,24 @@ def count_color(img, bound):
     """ Checks how much of a color is in an img """
     return np.sum(cv2.inRange(img, bound[0], bound[1]))
 
+def max_color(img):
+    bnd_count = [count_color(img, bound) for bound in BOUNDARIES]
+    return np.argmax(bnd_count)
+
 
 def find_cnt_color(image, cnt):
     """ Finds the most prevalent color in a contour """
     x, y, w, h = cv2.boundingRect(cnt)
     img_crop = image[y : y + h, x : x + w]
-    bnd_count = [count_color(img_crop, bound) for bound in BOUNDARIES]
-    return np.argmax(bnd_count)
+    return max_color(img_crop)
+
+def find_circle_color(img, circ):
+    xmin = circ[0] - circ[2]
+    xmax = circ[0] + circ[2]
+    ymin = circ[1] - circ[2]
+    ymax = circ[1] + circ[2]
+    img_crop = img[ymin:ymax, xmin:xmax]
+    return max_color(img_crop)
 
 
 def cnt_to_nums(img, cnts):
@@ -248,7 +264,8 @@ if __name__ == "__main__":
     output = test_img.copy()
     if circles is not None:
         # convert the (x, y) coordinates and radius of the circles to integers
-        circles = np.round(circles[0, :]).astype("int")
+        circles = list(np.round(circles[0, :]).astype("int"))
+        circles.sort(key=lambda x: calc_precedence(x[0], x[1], output.shape[1]))
         # loop over the (x, y) coordinates and radius of the circles
         for (x, y, r) in circles:
             # draw the circle in the output image, then draw a rectangle
@@ -256,6 +273,7 @@ if __name__ == "__main__":
             circle_img = cv2.circle(output, (x, y), r, (0, 255, 0), 4)
             fii.show_img(output)
             # cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
     fii.show_img(np.hstack(output))
     test_row = img_list[0]
     test_arrs = [convert_to_nums(img) for img in test_row]

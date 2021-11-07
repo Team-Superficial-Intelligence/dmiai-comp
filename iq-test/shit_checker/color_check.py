@@ -13,7 +13,7 @@ green = (np.array([20, 100, 40]), np.array([120, 255, 140]))
 # Yellow color boundaries [B, G, R]
 yellow = (np.array([0, 100, 155]), np.array([100, 150, 255]))
 # Blue color boundaries [B, G, R]
-blue = (np.array([180, 160, 50]), np.array([210, 180, 85]))
+blue = (np.array([120, 120, 30]), np.array([230, 200, 205]))
 
 red = (np.array([0, 0, 50]), np.array([30, 30, 200]))
 BOUNDARIES = [green, yellow, blue, red]
@@ -21,6 +21,7 @@ BOUNDARIES = [green, yellow, blue, red]
 
 def to_gray(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
 
 
 def apply_contrast(input_img, contrast=0):

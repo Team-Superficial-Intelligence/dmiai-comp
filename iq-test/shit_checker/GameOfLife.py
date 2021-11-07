@@ -1,21 +1,15 @@
 # Code to count dots
+import functools
 import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import numpy as np
 import cv2
 from pathlib import Path
-import re
 from typing import List
 import os
-from PIL import Image
 from skimage.metrics import structural_similarity as compare_ssim
-from imutils import build_montages
-from imutils import paths
-import argparse
 import imutils
-import matplotlib.pyplot as plt
-
 
 def count_dots(img):
     gray = cc.to_gray(img)
@@ -43,6 +37,20 @@ def check_grid(full_list, choices):
 def mean_dots(full_list):
     return np.mean([count_dots(img) for lst in full_list for img in lst])
 
+def cnt_size(cnt):
+    _, _, w, _ = cv2.boundingRect(cnt)
+    return w
+
+def get_contour_precedence(contour, cols):
+    tolerance_factor = 10
+    origin = cv2.boundingRect(contour)
+    return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
+
+def ultimate_mask(img):
+    black = (np.array([0, 0, 0]),np.array([30, 30, 30]))
+    boundaries = cc.BOUNDARIES + [black]
+    masks = [cv2.inRange(img, bound[0], bound[1]) for bound in boundaries]
+    return functools.reduce(cv2.bitwise_or, masks)
 
 if __name__ == "__main__":
     # reading the image in grayscale mode
@@ -66,6 +74,16 @@ if __name__ == "__main__":
     image = image_list[0][1]
     fii.show_img(image)
 
+    shapeMask = ultimate_mask(image) 
+    cnts = cv2.findContours(shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 100]
+    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
+    fii.show_img(shapeMask)
+    for cnt in cnts:
+        new_img = cv2.drawContours(image.copy(), [cnt], -1, (0, 255, 0), 2)
+        fii.show_img(new_img)
+	cv2.waitKey(0)
     count_dots(image)
     full_list = image_list
     check_grid(image_list, choices)

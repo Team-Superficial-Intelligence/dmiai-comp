@@ -105,18 +105,21 @@ def funky_func(src):
     return to_gray(test_img)
 
 
-def cnt_size(cnt):
+def cnt_size(cnt) -> int:
+    """ Returns the size of a contour """
     _, _, w, _ = cv2.boundingRect(cnt)
     return w
 
 
 def get_contour_precedence(contour, cols):
+    """ Sorts the contours from top left to bottom right"""
     tolerance_factor = 10
     origin = cv2.boundingRect(contour)
     return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
 
 
 def get_cnts(img):
+    """ Extracts nicely formatted contours from an image """
     imgray = to_gray(img)
     _, thresh = cv2.threshold(imgray, 127, 255, 0)
     contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -127,10 +130,12 @@ def get_cnts(img):
 
 
 def count_color(img, bound):
+    """ Checks how much of a color is in an img """
     return np.sum(cv2.inRange(img, bound[0], bound[1]))
 
 
 def find_cnt_color(image, cnt):
+    """ Finds the most prevalent color in a contour """
     x, y, w, h = cv2.boundingRect(cnt)
     img_crop = image[y : y + h, x : x + w]
     bnd_count = [count_color(img_crop, bound) for bound in BOUNDARIES]
@@ -138,11 +143,13 @@ def find_cnt_color(image, cnt):
 
 
 def cnt_to_nums(img, cnts):
+    """ Converts contours to numbers based on color"""
     num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
     return num_array
 
 
 def correct_cols(array_list):
+    """ if only two colours create a boolean """
     new_arrays = array_list
     unique_cols = np.unique(np.concatenate(array_list))
     if len(unique_cols) <= 2:

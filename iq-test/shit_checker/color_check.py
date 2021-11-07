@@ -2,6 +2,7 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.rotate_check as rc
 import cv2
 import numpy as np
+import imutils
 from pathlib import Path
 from sklearn.cluster import MiniBatchKMeans
 
@@ -21,7 +22,6 @@ BOUNDARIES = [green, yellow, blue, red]
 
 def to_gray(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
 
 
 def apply_contrast(input_img, contrast=0):
@@ -102,6 +102,51 @@ def funky_func(src):
     test_img[np.where((test_img != val1).all(axis=2))] = [0, 0, 0]
     test_img[np.where((test_img == val1).all(axis=2))] = [255, 255, 255]
     return to_gray(test_img)
+
+
+def cnt_size(cnt):
+    _, _, w, _ = cv2.boundingRect(cnt)
+    return w
+
+
+def get_contour_precedence(contour, cols):
+    tolerance_factor = 10
+    origin = cv2.boundingRect(contour)
+    return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
+
+
+def get_cnts(img):
+    imgray = to_gray(img)
+    _, thresh = cv2.threshold(imgray, 127, 255, 0)
+    contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(contours)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 80]
+    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
+    return cnts
+
+
+def count_color(img, bound):
+    return np.sum(cv2.inRange(img, bound[0], bound[1]))
+
+
+def find_cnt_color(image, cnt):
+    x, y, w, h = cv2.boundingRect(cnt)
+    img_crop = image[y : y + h, x : x + w]
+    bnd_count = [count_color(img_crop, bound) for bound in BOUNDARIES]
+    return np.argmax(bnd_count)
+
+
+def cnt_to_nums(img, cnts):
+    num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
+    unique_cols = np.unique(num_array)
+    if len(unique_cols) == 2:
+        num_array = num_array == unique_cols[0]
+    return num_array
+
+
+def convert_to_nums(img):
+    cnts = get_cnts(img)
+    return cnt_to_nums(img, cnts)
 
 
 if __name__ == "__main__":

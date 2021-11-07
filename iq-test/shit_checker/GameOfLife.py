@@ -52,14 +52,35 @@ def ultimate_mask(img):
     masks = [cv2.inRange(img, bound[0], bound[1]) for bound in boundaries]
     return functools.reduce(cv2.bitwise_or, masks)
 
+def get_cnts(img):
+    imgray = cc.to_gray(img)
+    _, thresh = cv2.threshold(imgray, 127, 255, 0)
+    contours= cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(contours)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt)<80]  
+    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
+    return cnts
 
 def count_color(img, bound):
     return np.sum(cv2.inRange(img, bound[0], bound[1]))
-def find_cnt_color(img, col):
+
+
+def find_cnt_color(image, cnt):
     x, y, w, h = cv2.boundingRect(cnt)
     img_crop = image[y:y+h, x:x+w]
     bnd_count = [count_color(img_crop, bound) for bound in cc.BOUNDARIES]
     return np.argmax(bnd_count)
+
+def cnt_to_nums(img, cnts):
+    num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
+    unique_cols = np.unique(num_array)
+    if len(unique_cols) == 2:
+        num_array = num_array == unique_cols[0]
+    return num_array
+
+def convert_to_nums(img):
+    cnts = get_cnts(img)
+    return cnt_to_nums(img, cnts)
 
 if __name__ == "__main__":
     # reading the image in grayscale mode
@@ -80,16 +101,7 @@ if __name__ == "__main__":
 
     image = image_list[0][1]
     fii.show_img(image)
-    imgray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    ret, thresh = cv2.threshold(imgray, 127, 255, 0)
-    contours= cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    fii.show_img(thresh)
-    cnts = imutils.grab_contours(contours)
-    cnts = [cnt for cnt in cnts if cnt_size(cnt)<80]  
-    cnts.sort(key=lambda x:get_contour_precedence(x, image.shape[1]))
-    
-    cnt = cnts[0]
-
+    a = convert_to_nums(image)
 
     shapeMask = ultimate_mask(image) 
     cnts = cv2.findContours(shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

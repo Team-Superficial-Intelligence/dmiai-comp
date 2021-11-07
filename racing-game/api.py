@@ -144,7 +144,7 @@ def predict(response: PredictRequest) -> PredictResponse:
             f'{b.OKMSG}Report:\n\tStep: {s.step}\n\tDistance: {r.distance}\n\tElapsed time: {r.elapsed_time_ms}\n\tSpeed: {r.velocity.x}\n{b.END}')
 
     s.step += 1
-    if r.did_crash or r.elapsed_time_ms < 5:
+    if r.did_crash or r.elapsed_time_ms < 10:
         s.results_log.append(
             {
                 'steps': s.step,

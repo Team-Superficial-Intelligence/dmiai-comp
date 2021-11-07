@@ -2,7 +2,7 @@ from asyncore import close_all
 from math import ceil, floor, sqrt
 from multiprocessing.connection import wait
 from pydoc import describe
-from typing import List
+from typing import List, Tuple, Union
 import cv2
 import numpy as np
 
@@ -11,7 +11,19 @@ hsv_colors = np.array([[190, 0, 10], [80, 160, 205], [190, 140, 80],
                        [80, 156, 58]])
 
 
-def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
+def check_matrix(img_list, choices) -> None:
+    matrices = get_matrix_representations(img_list, choices)
+
+    if matrices is None:
+        return None
+    else:
+        print("matrices found")
+
+
+def get_matrix_representations(
+    img_list, choices
+) -> Union[List[List[List[np.ndarray]], List[np.ndarray], List[np.ndarray]],
+           None]:
     # do some stuff
     test_cases = img_list[:3]
     final_imgs = img_list[3][:2]
@@ -20,21 +32,29 @@ def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
     final_matrices = []
     choice_matrices = []
     used_colors = []
+    found_matrix = False
     for puzzle in test_cases:
         puzzles = []
         for img in puzzle:
             matrix, used_colors = find_shapes_in_image(img, used_colors, False)
             if matrix is not None:
-                puzzles.append(matrix)
-        test_matrices.append(puzzles)
+                puzzles.append(puzzles)
+                found_matrix = True
+        if len(puzzles) > 0:
+            test_matrices.append(puzzles)
     for img in final_imgs:
         matrix, used_colors = find_shapes_in_image(img, used_colors, False)
         if matrix is not None:
             final_matrices.append(matrix)
+            found_matrix = True
     for img in choices:
         matrix, used_colors = find_shapes_in_image(img, used_colors)
         if matrix is not None:
             choice_matrices.append(matrix)
+            found_matrix = True
+
+    if not found_matrix:
+        return None
     return test_matrices, final_matrices, choice_matrices
 
 

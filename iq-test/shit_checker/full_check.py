@@ -83,3 +83,13 @@ def test_shit():
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
         choices = [read_img_string(img_file) for img_file in choice_paths]
         print(check_a_shit(img, choices))
+
+
+if __name__ == "__main__":
+    img_dir = Path("../example-data/iq-test/dmi-api-test")
+    img_paths = rc.find_img_files(img_path=img_dir)
+    for img_path in img_paths:
+        img = read_img_string(img_path)
+        choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
+        choices = [read_img_string(img_file) for img_file in choice_paths]
+        print(check_shit(img, choices))

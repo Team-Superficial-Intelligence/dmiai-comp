@@ -96,9 +96,11 @@ def predict(response: PredictRequest) -> PredictResponse:
                 if r.sensors.left_side < 300 or r.sensors.left_front < 500:
                     s.auto = "right"
                     s.lane = "right"
-                else:
+                elif r.sensors.right_side < 300 or r.sensors.right_front < 500:
                     s.auto = "left"
                     s.lane = "left"
+                else:
+                    s.auto = "decelerate"
             elif s.lane == "left":
                 if r.sensors.right_side < 300 or r.sensors.right_front < 500:
                     s.auto = "decelerate"
@@ -162,6 +164,7 @@ def predict(response: PredictRequest) -> PredictResponse:
         s.episode += 1
         s.step = 0
         s.avoid_front = False
+        s.last_distance = 0
 
     return PredictResponse(
         action=action

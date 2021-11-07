@@ -79,9 +79,11 @@ def test_shit():
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
         choices = [read_img_string(img_file) for img_file in choice_paths]
         matrix_groups = check_a_shit(img, choices)
-        for matrices in matrix_groups:
-            for matrix in matrices:
-                print(matrix)
+        if matrix_groups is not None:
+            for matrices in matrix_groups:
+                for matrix in matrices:
+                    # print(matrix)
+                    pass
 
 
 if __name__ == "__main__":

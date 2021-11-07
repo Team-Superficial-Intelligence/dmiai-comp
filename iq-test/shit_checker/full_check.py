@@ -9,7 +9,11 @@ import shit_checker.format_iq_imgs as fii
 import shit_checker.color_check as cc
 import shit_checker.rotate_check as rc
 import shit_checker.no_change_check as ncc
+<<<<<<< HEAD
 import shit_checker.matrix_solver as ms
+=======
+import shit_checker.GameOfLife as gl
+>>>>>>> origin/uc4
 
 # import red_dot_check as rd
 # import rounding_check as ro
@@ -26,36 +30,34 @@ def base64_to_cv2(img_string: str) -> np.array:
     return img
 
 
+def check_result(img_list, choices, func, print_msg):
+    result = func(img_list, choices)
+    if result is not None:
+        print(print_msg)
+        return result
+    return None
+
+
 def check_shit(img_string: str, choice_list: List[str]):
     img = base64_to_cv2(img_string)
     choices = [base64_to_cv2(choice) for choice in choice_list]
     img_list = fii.split_img(img)
 
-    rotation_result = rc.check_rotations(img_list, choices)
-    if rotation_result is not None:
-        print("it's a rotation!")
-        return rotation_result
+    func_list = [
+        (rc.check_rotations, "rotation"),
+        (ncc.check_semi_similar, "semi-similar"),
+        (gl.check_grid, "grid wuhuu"),
+        (cc.circle_logic_check, "circle color logic"),
+        (cc.color_logic_check, "color logic homie"),
+        (cc.color_logic_check, "color logic homie"),
+        (ms.check_matrix, "matrix motherfucker")
+    ]
 
-    no_change_result = ncc.check_semi_similar(img_list, choices)
-    if no_change_result is not None:
-        print("semi similar stuff!")
-        return no_change_result
+    for func, print_msg in func_list:
+        result = check_result(img_list, choices, func, print_msg)
+        if result is not None:
+            return result
 
-    bitxor_result = cc.check_xor(img_list, choices)
-    if bitxor_result is not None:
-        print("colour funk going on!")
-        return bitxor_result
-
-    bitand_result = cc.check_bitand(img_list, choices)
-    if bitand_result is not None:
-        print("bitand galore!")
-        return bitand_result
-    test_matrices, final_matrices, choice_matrices = ms.check_matrix(
-        img_list, choices)
-
-    if sum(len(test_matrices), len(final_matrices), len(choice_matrices)) > 0:
-        print("matrix galore!")
-        return final_matrices
     print("let's go random!")
     return random.choice(range(len(choices)))
 

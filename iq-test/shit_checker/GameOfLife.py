@@ -1,97 +1,170 @@
-# Intuition
-## Look at picture 2 
-## Pick Picture 3 that is furthest apart from one color distribution
-
-# import the necessary packages
-import format_iq_imgs as fii
+# Code to count dots
+import functools
+import shit_checker.format_iq_imgs as fii
+import shit_checker.color_check as cc
+import shit_checker.rotate_check as rc
 import numpy as np
-import cv2 as cv
+import itertools
+import cv2
 from pathlib import Path
-import re
 from typing import List
 import os
-from PIL import Image
-from skimage.metrics import structural_similarity
-from imutils import build_montages
-from imutils import paths
-import argparse
+from skimage.metrics import structural_similarity as compare_ssim
 import imutils
 
-import matplotlib.pyplot as plt
 
-os.getcwd()
-IMG_DIR = Path("../../example-data/iq-test/dmi-api-test")
-IMG_PATH = Path("../../example-data/iq-test/dmi-api-test")
-IMG_DIR.exists()
-IMG_PATH.exists()
-
-img_files = list(IMG_DIR.glob("*image*.png"))
-test_img = fii.read_img(img_files[2])
-image_list = fii.split_img(test_img)
-# Image to alter
-image = image_list[0][1]
-
-# Testimage
-def find_identifier(img_path):
-    img_name = img_path.name
-    return re.match(r"rq_\d+", img_name).group(0)
-
-def find_img_choices(img_path: Path) -> List[Path]:
-    identifier = find_identifier(img_path)
-    return list(IMG_PATH.glob(f"*{identifier}*choice*.png"))
-
-img_files = list(IMG_PATH.glob("*image*.png"))
-img_path = img_files[4]
-img_choices = find_img_choices(img_path)
-choices = [fii.read_img(f) for f in img_choices]
-
-# Compute Difference using Sickit
-(score, diff) = structural_similarity(image, choices[3], full=True,multichannel=True)
-print("Image similarity", score)
+def count_dots(img):
+    gray = cc.to_gray(img)
+    # threshold
+    _, threshed = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    # findcontours
+    cnts = cv2.findContours(threshed, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    # filter by area
+    s1 = 1
+    s2 = 500
+    return sum((s1 < cv2.contourArea(cnt) < s2) for cnt in cnts)
 
 
-# Print
-cv.imwrite('diff.png', difference)
-#Potentially show
-cv.imshow('diff.png', difference)
-cv.waitKey()
-cv.destroyAllWindows() 
+def check_grid(full_list, choices):
+    final_img = full_list[3][1]
+    is_grid = mean_dots(full_list) > 15
+    if is_grid:
+        choice_sim = [
+            compare_ssim(final_img, choice, multichannel=True) for choice in choices
+        ]
+        return np.argmin(choice_sim)
+    return None
 
 
+def mean_dots(full_list):
+    return np.mean([count_dots(img) for lst in full_list for img in lst])
 
 
+def cnt_size(cnt):
+    _, _, w, _ = cv2.boundingRect(cnt)
+    return w
 
 
-# Leftovers
-# Convert BGR to HSV
-#hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-# https://answers.opencv.org/question/229620/drawing-a-rectangle-around-the-red-color-region/
-
-# red color boundaries [B, G, R]
-## define the list of boundaries
-boundaries = [
-    ([0, 0, 50], [60, 60, 200])
-]
-
-for (lower, upper) in boundaries:
-    # create NumPy arrays from the boundaries
-    lower = np.array(lower, dtype = "uint8")
-    upper = np.array(upper, dtype = "uint8")
-    # find the colors within the specified boundaries and apply the mask
-    # For the second image we have
-    mask = cv.inRange(image, lower, upper)
-    output_we_know = cv.bitwise_and(image, image, mask = mask)
-    # For testimage
-    mask = cv.inRange(testimage, lower, upper)
+def get_contour_precedence(contour, cols):
+    tolerance_factor = 10
+    origin = cv2.boundingRect(contour)
+    return ((origin[1] // tolerance_factor) * tolerance_factor) * cols + origin[0]
 
 
+def ultimate_mask(img):
+    black = (np.array([0, 0, 0]), np.array([30, 30, 30]))
+    boundaries = cc.BOUNDARIES + [black]
+    masks = [cv2.inRange(img, bound[0], bound[1]) for bound in boundaries]
+    return functools.reduce(cv2.bitwise_or, masks)
 
-# Testing
-##cv.imshow('diff.png', testimage)
-##cv.waitKey()
-##cv.destroyAllWindows() 
 
-#how
-## Remove everything but one color
-## Add picture 2 on top of picture 3 in so they cancel each other out
-## Look at what's left potential_choice_output= cv.bitwise_and(testimage, image, mask = mask)
+def get_cnts(img):
+    imgray = cc.to_gray(img)
+    _, thresh = cv2.threshold(imgray, 127, 255, 0)
+    contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(contours)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 80]
+    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
+    return cnts
+
+
+def count_color(img, bound):
+    return np.sum(cv2.inRange(img, bound[0], bound[1]))
+
+
+def find_cnt_color(image, cnt):
+    x, y, w, h = cv2.boundingRect(cnt)
+    img_crop = image[y : y + h, x : x + w]
+    bnd_count = [count_color(img_crop, bound) for bound in cc.BOUNDARIES]
+    return np.argmax(bnd_count)
+
+
+def cnt_to_nums(img, cnts):
+    num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
+    unique_cols = np.unique(num_array)
+    if len(unique_cols) == 2:
+        num_array = num_array == unique_cols[0]
+    return num_array
+
+
+def convert_to_nums(img):
+    cnts = get_cnts(img)
+    return cnt_to_nums(img, cnts)
+
+
+def neighbors(im, i, j):
+    return [im[i - 1, j - 1]]
+
+
+def do_game_of_life(mat: np.ndarray) -> np.ndarray:
+    new_mat = mat.copy()
+    positions = itertools.product(range(new_mat.shape[0]), range(new_mat.shape[1]))
+    for pos in positions:
+        elem = new_mat[pos[0], pos[1]]
+        if elem != 0:
+            # neighbour 0
+            if new_mat[pos[0] - 1, pos[0]] == 0 and pos[0] - 1 >= 0:
+                new_mat[pos[0] - 1, pos[0]] = elem
+            elif new_mat[pos[0] - 1, pos[0]] != elem and pos[0] - 1 >= 0:
+                new_mat[pos[0] - 1, pos[0]] = 0
+            if new_mat[pos[0] + 1, pos[0]] == 0 and pos[0] + 1 <= mat.shape[0]:
+                new_mat[pos[0] + 1, pos[0]] = elem
+            elif new_mat[pos[0] + 1, pos[0]] != elem and pos[0] + 1 <= mat.shape[0]:
+                new_mat[pos[0] + 1, pos[0]] = 0
+            if new_mat[pos[0], pos[1] - 1] == 0 and pos[1] - 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] - 1] = elem
+            elif new_mat[pos[0], pos[1] - 1] != elem and pos[1] - 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] - 1] = 0
+            if new_mat[pos[0], pos[1] + 1] == 0 and pos[1] + 1 <= mat.shape[1]:
+                new_mat[pos[0], pos[1] + 1] = elem
+            elif new_mat[pos[0], pos[1] + 1] != elem and pos[1] + 1 <= mat.shape[0]:
+                new_mat[pos[0], pos[1] + 1] = 0
+    return new_mat
+
+
+if __name__ == "__main__":
+    # reading the image in grayscale mode
+    IMG_DIR = Path("../example-data/iq-test/dmi-api-test")
+    IMG_DIR.exists()
+
+    img_files = list(IMG_DIR.glob("*image*.png"))
+
+    mat = np.random.random_integers(0, 2, (4, 4))
+    img_path = img_files[0]
+    test_img = fii.read_img(img_path)
+    image_list = fii.split_img(test_img)
+
+    choices = [
+        fii.read_img(choice)
+        for choice in rc.find_img_choices(img_path, img_dir=IMG_DIR)
+    ]
+    # Image to alter
+
+    image = image_list[0][1]
+    fii.show_img(image)
+    a = convert_to_nums(image)
+
+    shapeMask = ultimate_mask(image)
+    cnts = cv2.findContours(
+        shapeMask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
+    cnts = imutils.grab_contours(cnts)
+    cnts = [cnt for cnt in cnts if cnt_size(cnt) < 100]
+    cnts.sort(key=lambda x: get_contour_precedence(x, image.shape[1]))
+    fii.show_img(shapeMask)
+    for cnt in cnts:
+        new_img = cv2.drawContours(image.copy(), [cnt], -1, (0, 255, 0), 2)
+        fii.show_img(new_img)
+    count_dots(image)
+    full_list = image_list
+    check_grid(image_list, choices)
+
+    for img_path in img_files:
+        img = fii.read_img(img_path)
+        image_list = fii.split_img(img)
+        choices = [
+            fii.read_img(choice)
+            for choice in rc.find_img_choices(img_path, img_dir=IMG_DIR)
+        ]
+        # print(mean_dots(image_list))
+        print(check_grid(image_list, choices))

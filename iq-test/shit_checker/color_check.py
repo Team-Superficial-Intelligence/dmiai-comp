@@ -1,11 +1,28 @@
+import functools
+from numpy.random.mtrand import noncentral_chisquare
 import shit_checker.format_iq_imgs as fii
 import shit_checker.rotate_check as rc
 import cv2
 import numpy as np
+import imutils
+from typing import List
 from pathlib import Path
 from sklearn.cluster import MiniBatchKMeans
 
 from skimage.metrics import structural_similarity as compare_ssim
+
+
+# green color boundaries [B, G, R]
+green = (np.array([20, 100, 40]), np.array([120, 255, 140]))
+# Yellow color boundaries [B, G, R]
+yellow = (np.array([0, 100, 155]), np.array([100, 150, 255]))
+# Blue color boundaries [B, G, R]
+blue = (np.array([120, 120, 30]), np.array([230, 200, 205]))
+red = (np.array([0, 0, 50]), np.array([30, 30, 200]))
+black = (np.array([0, 0, 0]), np.array([50, 50, 50]))
+white = (np.array([210, 210, 210]), np.array([255, 255, 255]))
+
+BOUNDARIES = [green, yellow, blue, red, black, white]
 
 
 def to_gray(img):
@@ -92,76 +109,216 @@ def funky_func(src):
     return to_gray(test_img)
 
 
+def cnt_size(cnt) -> int:
+    """ Returns the size of a contour """
+    _, _, w, _ = cv2.boundingRect(cnt)
+    return w
+
+
+def calc_precedence(x, y, cols, tolerance_factor=10):
+    return ((y // tolerance_factor) * tolerance_factor) * cols + x
+
+
+def get_contour_precedence(contour, cols: int):
+    """ Sorts the contours from top left to bottom right"""
+    origin = cv2.boundingRect(contour)
+    return calc_precedence(origin[0], origin[1], cols)
+
+
+def get_cnts(img):
+    """ Extracts nicely formatted contours from an image """
+    imgray = to_gray(img)
+    _, thresh = cv2.threshold(imgray, 127, 255, 0)
+    contours = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(contours)
+    cnts = [cnt for cnt in cnts if 5 < cnt_size(cnt) < 80]
+    cnts.sort(key=lambda x: get_contour_precedence(x, img.shape[1]))
+    return cnts
+
+
+def count_color(img, bound):
+    """ Checks how much of a color is in an img """
+    return np.sum(cv2.inRange(img, bound[0], bound[1]))
+
+
+def max_color(img):
+    bnd_count = [count_color(img, bound) for bound in BOUNDARIES]
+    return np.argmax(bnd_count)
+
+
+def find_cnt_color(image, cnt):
+    """ Finds the most prevalent color in a contour """
+    x, y, w, h = cv2.boundingRect(cnt)
+    img_crop = image[y : y + h, x : x + w]
+    return max_color(img_crop)
+
+
+def find_circle_color(img, circ):
+    xmin = circ[0] - circ[2]
+    xmax = circ[0] + circ[2]
+    ymin = circ[1] - circ[2]
+    ymax = circ[1] + circ[2]
+    img_crop = img[ymin:ymax, xmin:xmax]
+    return max_color(img_crop)
+
+
+def cnt_to_nums(img, cnts):
+    """ Converts contours to numbers based on color"""
+    num_array = np.array([find_cnt_color(img, cnt) for cnt in cnts])
+    return num_array
+
+
+def correct_cols(array_list):
+    """ if only two colours create a boolean """
+    new_arrays = array_list
+    unique_cols = np.unique(np.concatenate(array_list))
+    if len(unique_cols) <= 2:
+        new_arrays = [a == unique_cols[0] for a in array_list]
+    return new_arrays
+
+
+def final_logic_guess(final_arrs, choice_arrs, func):
+    guess = func(*final_arrs)
+    choice_truth = [(guess == arr).all() for arr in choice_arrs]
+    return np.argmax(choice_truth) if np.any(choice_truth) else None
+
+
+def check_logic_func(a_list, final_arrs, choice_arrs, func):
+    result = [arr_check(*lst, func=func) for lst in a_list]
+    if result:
+        guess = final_logic_guess(final_arrs, choice_arrs, func)
+        return guess
+    return None
+
+
+def not_xor(src1, src2):
+    return ~np.logical_xor(src1, src2)
+
+
+def not_and(src1, src2):
+    return ~np.logical_and(src1, src2)
+
+
+def check_equal_len(arrays: List[np.array]) -> bool:
+    return np.all([x.shape == arrays[0][0].shape for arr in arrays for x in arr])
+
+
+def color_logic_check(img_list, choices):
+    test_list = img_list[:3]
+    final_imgs = img_list[3][:2]
+    # convert to nums
+    try:
+        a_list = [[convert_to_nums(img) for img in lst] for lst in test_list]
+        if not check_equal_len(a_list):
+            print("oh no len error")
+            return None
+        a_list = [correct_cols(arrs) for arrs in a_list]
+        choice_arrs = correct_cols([convert_to_nums(choice) for choice in choices])
+        final_arrs = correct_cols([convert_to_nums(img) for img in final_imgs])
+    except TypeError:
+        return None
+    func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
+    for func in func_list:
+        try:
+            result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        except ValueError:
+            return None
+        if result is not None:
+            return result
+    return None
+
+
+def circle_logic_check(img_list, choices):
+    test_list = img_list[:3]
+    final_imgs = img_list[3][:2]
+    # convert to nums
+    try:
+        a_list = [[circle_to_num(img) for img in lst] for lst in test_list]
+        a_list = [correct_cols(arrs) for arrs in a_list]
+        choice_arrs = correct_cols([circle_to_num(choice) for choice in choices])
+        final_arrs = correct_cols([circle_to_num(img) for img in final_imgs])
+    except TypeError:
+        return None
+    func_list = [np.logical_xor, np.logical_and, not_xor, not_and]
+    for func in func_list:
+        try:
+            result = check_logic_func(a_list, final_arrs, choice_arrs, func)
+        except ValueError:
+            return None
+        if result is not None:
+            return result
+    return None
+
+
+def convert_to_nums(img):
+    cnts = get_cnts(img)
+    return cnt_to_nums(img, cnts)
+
+
+def arr_check(a1, a2, target, func=np.logical_xor):
+    return np.all(func(a1, a2) == target)
+
+
+def find_circles(img):
+    gray = to_gray(img)
+    minDist = 40
+    param1 = 50  # 500
+    param2 = 20  # 200 #smaller value-> more false circles
+    minRadius = 4
+    maxRadius = 20  # 10
+    circles = cv2.HoughCircles(
+        gray,
+        cv2.HOUGH_GRADIENT,
+        1,
+        minDist,
+        param1=param1,
+        param2=param2,
+        minRadius=minRadius,
+        maxRadius=maxRadius,
+    )
+    if circles is None:
+        return None
+    circles = list(np.round(circles[0, :]).astype("int"))
+    circles.sort(key=lambda x: calc_precedence(x[0], x[1], img.shape[1]))
+    return circles
+
+
+def circle_to_num(img):
+    circles = find_circles(img)
+    return [find_circle_color(img, circle) for circle in circles]
+
+
+def mask_colours(img):
+    """ Creates a funky mask that will solve all our problem """
+    colors = BOUNDARIES[:4]
+    new_img = np.zeros(img.shape[:2], dtype=np.uint8)
+    for color in colors:
+        new_mask = cv2.inRange(img, color[0], color[1])
+        # fii.show_img(new_mask)
+        new_img = cv2.bitwise_or(new_img, new_mask)
+    return new_img
+
+
 if __name__ == "__main__":
-    img_paths = rc.find_img_files()
-    for i, img_path in enumerate(img_paths):
-        choice_paths = rc.find_img_choices(img_path)
-        choices = [fii.read_img(f) for f in choice_paths]
+    IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
+    img_paths = rc.find_img_files(img_path=IMG_PATH)
+    img_path = img_paths[-3]
+    for img_path in img_paths:
         img = fii.read_img(img_path)
         img_list = fii.split_img(img)
-        print(check_bitand(img_list, choices))
+        choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
+        choices = [fii.read_img(choice) for choice in choice_paths]
+        print(circle_logic_check(img_list, choices))
+        print(color_logic_check(img_list, choices))
+    fii.show_img(choices[1])
+    test_img = img_list[0][0]
 
-    np.logical_xor(np.array([1, 1, 0, 1]), np.array([0, 1, 0, 1]))
-
-    fii.show_img(img)
-    choice = choices[0]
-
-    source1 = img_list[0][0]
-    source2 = img_list[0][1]
-    bitstuff = xor_func(source1, source2)
-    [compare_ssim(bitstuff, choice, multichannel=True) for choice in choices]
-    fii.show_img(xor_preprocess(choice))
-    fii.show_img(bitstuff)
-    choice
-
-    fii.show_img(quantize_image(source1, clusters=2))
-
-    src1 = funky_func(source1)
-    src2 = funky_func(source2)
-    bitstuff = cv2.bitwise_xor(src1, src2)
-    fii.show_img(bitstuff)
-
-    testytest = funky_func(choice)
-    fii.show_img(bitstuff)
-
-    fii.show_img(testy)
-    fii.show_img(test_img)
-
-    deltaE
-    hsvImg = cv2.cvtColor(choice, cv2.COLOR_BGR2HSV)
-
-    # multiple by a factor to change the saturation
-    hsvImg[..., 1] = hsvImg[..., 1] * 1.2
-
-    image = cv2.cvtColor(hsvImg, cv2.COLOR_HSV2BGR)
-    fii.show_img(image)
-
-    fii.show_img(xor_func(source1, source1))
-    cv2.COLORBGR2
-    fii.show_img(bitstuff)
-
-    kernel = np.ones((5, 5), np.uint8)
-    fii.show_img(cv2.dilate(choices[1], kernel, iterations=1))
-
-    for choice in choices:
-        fii.show_img(choice)
-    fii.show_img(bitstuff)
-    target = img_list[0][2]
-
-    gray = cv2.cvtColor(choice, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (7, 7), 0.5)
-    edge = cv2.Canny(blur, 0, 50, 3)
-
-    contours, hierarchy = cv2.findContours(
-        edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
-
-    for contour, hier in zip(contours, hierarchy):
-        (x, y, w, h) = cv2.boundingRect(contour)
-        rect = choice[y : y + h, x : x + w]
-
-        # rect = cv2.rectangle(choice, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-    div = 4
-    quantized = choice // div * div + div // 2
-
+    circles = find_circles(test_img)
+    for (x, y, r) in circles:
+        output = test_img.copy()
+        circle_img = cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+        fii.show_img(output)
+    cnts = get_cnts(test_img)
+    for cnt in cnts:
+        new_img = cv2.drawContours(test_img.copy(), [cnt], -1, (0, 255, 0), 2)
+        fii.show_img(new_img)

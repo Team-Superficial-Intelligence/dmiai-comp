@@ -24,14 +24,17 @@ def check_matrix(img_list, choices) -> List[List[np.ndarray]]:
         puzzles = []
         for img in puzzle:
             matrix, used_colors = find_shapes_in_image(img, used_colors, False)
-            puzzles.append(matrix)
+            if matrix is not None:
+                puzzles.append(matrix)
         test_matrices.append(puzzles)
     for img in final_imgs:
         matrix, used_colors = find_shapes_in_image(img, used_colors, False)
-        final_matrices.append(matrix)
+        if matrix is not None:
+            final_matrices.append(matrix)
     for img in choices:
         matrix, used_colors = find_shapes_in_image(img, used_colors)
-        choice_matrices.append(matrix)
+        if matrix is not None:
+            choice_matrices.append(matrix)
     return test_matrices, final_matrices, choice_matrices
 
 
@@ -111,10 +114,14 @@ def find_shapes_in_image(img, used_colors=None, debug=False):
                                minRadius=0,
                                maxRadius=maxr)
 
+    if circles is None:
+        return None, used_colors
+
     circles = np.uint16(np.around(circles))
     circles = circles[0, :]
-
     grid_points = len(circles)
+    if grid_points < 9 or grid_points > 25:
+        return None, used_colors
 
     row_count = int(sqrt(grid_points))
     col_count = row_count

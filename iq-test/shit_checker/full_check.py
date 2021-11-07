@@ -50,7 +50,12 @@ def check_shit(img_string: str, choice_list: List[str]):
     if bitand_result is not None:
         print("bitand galore!")
         return bitand_result
-    matrix_result = ms.check_matrix(img_list, choices)
+    test_matrices, final_matrices, choice_matrices = ms.check_matrix(
+        img_list, choices)
+
+    if sum(len(test_matrices), len(final_matrices), len(choice_matrices)) > 0:
+        print("matrix galore!")
+        return final_matrices
     print("let's go random!")
     return random.choice(range(len(choices)))
 
@@ -68,8 +73,8 @@ def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(
         img_path=img_dir,
-        pattern="rq_1635798965381646400_image_356243069114892252.png")
-    #pattern="rq_1635798965816196900_image_5462613357368331411.png")
+        #pattern="rq_1635798965381646400_image_356243069114892252.png")
+        pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))
         img = read_img_string(img_path)

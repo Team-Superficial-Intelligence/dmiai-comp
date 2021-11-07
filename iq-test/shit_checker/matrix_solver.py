@@ -18,6 +18,7 @@ def check_matrix(img_list, choices) -> None:
         return None
     else:
         print("matrices found")
+        return matrices
 
 
 def get_matrix_representations(img_list, choices) -> Union[List, None]:

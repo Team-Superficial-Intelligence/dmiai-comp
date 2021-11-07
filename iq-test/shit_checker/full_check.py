@@ -71,14 +71,17 @@ def test_shit():
     img_dir = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(
         img_path=img_dir,
-        #pattern="rq_1635798965381646400_image_356243069114892252.png")
-        pattern="rq_1635798965816196900_image_5462613357368331411.png")
+        pattern="rq_1635798965381646400_image_356243069114892252.png")
+    # pattern="rq_1635798965816196900_image_5462613357368331411.png")
     for img_path in img_paths:
         print("Current image: {}".format(img_path))
         img = read_img_string(img_path)
         choice_paths = rc.find_img_choices(img_path, img_dir=img_dir)
         choices = [read_img_string(img_file) for img_file in choice_paths]
-        print(check_a_shit(img, choices))
+        matrix_groups = check_a_shit(img, choices)
+        for matrices in matrix_groups:
+            for matrix in matrices:
+                print(matrix)
 
 
 if __name__ == "__main__":

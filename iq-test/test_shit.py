@@ -2,6 +2,9 @@ from pathlib import Path
 import shit_checker.full_check as fc
 import shit_checker.rotate_check as rc
 
+fc.test_shit()
+exit()
+
 img_dir = Path("../example-data/iq-test/dmi-api-test")
 img_paths = rc.find_img_files(img_path=img_dir)
 for img_path in img_paths:

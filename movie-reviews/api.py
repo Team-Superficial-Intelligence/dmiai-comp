@@ -20,7 +20,7 @@ import time
 # emily = Emily()
 
 load_env()
-model = load_model(pt_dir='outputs/checkpoint-250')
+model = load_model(pt_dir='outputs/best_model')
 
 # --- Welcome to your Emily API! --- #
 # See the README for guides on how to test it.

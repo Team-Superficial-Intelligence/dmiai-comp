@@ -110,7 +110,7 @@ def main(src='imdb_sup'):
     use_conf = 'dbert2'
     m, pt, bs, tt = model_config(use_conf)
     # this time start from previously trained model
-    pt = 'outputs-distil-wt-decay-cont/checkpoint-38800'
+    pt = 'outputs-distil-roberta-wd-cont-e37/checkpoint-39000'
     if src == 'imdb_sup':
         n_labels = 8
         epochs = 5

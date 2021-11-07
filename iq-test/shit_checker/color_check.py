@@ -200,7 +200,7 @@ def arr_check(a1, a2, target, func=np.logical_xor):
 if __name__ == "__main__":
     IMG_PATH = Path("../example-data/iq-test/dmi-api-test")
     img_paths = rc.find_img_files(img_path=IMG_PATH)
-    img_path = img_paths[0]
+    img_path = img_paths[5]
     img = fii.read_img(img_path)
     img_list = fii.split_img(img)
     choice_paths = rc.find_img_choices(img_path, img_dir=IMG_PATH)
@@ -209,12 +209,49 @@ if __name__ == "__main__":
     for boundry in BOUNDARIES:
         mask = cv2.inRange(test_img, boundry[0], boundry[1])
         print(np.sum(mask))
+    test_img = img_list[0][0]
+    cnts = get_cnts(test_img)
+    for cnt in cnts:
+        new_img = cv2.drawContours(test_img.copy(), [cnt], -1, (0, 255, 0), 2)
+        fii.show_img(new_img)
 
     test_img = img_list[1][0]
+    blurred = cv2.medianBlur(
+        to_gray(test_img), 25
+    )  # cv2.bilateralFilter(gray,10,50,50)
+    fii.show_img(blurred)
+    minDist = 40
+    param1 = 50  # 500
+    param2 = 1  # 200 #smaller value-> more false circles
+    minRadius = 4
+    maxRadius = 20  # 10
+    fii.show_img
 
+    # docstring of HoughCircles: HoughCircles(image, method, dp, minDist[, circles[, param1[, param2[, minRadius[, maxRadius]]]]]) -> circles
+    circles = cv2.HoughCircles(
+        to_gray(test_img),
+        cv2.HOUGH_GRADIENT,
+        1,
+        minDist,
+        param1=param1,
+        param2=param2,
+        minRadius=minRadius,
+        maxRadius=maxRadius,
+    )
+    output = test_img.copy()
+    if circles is not None:
+        # convert the (x, y) coordinates and radius of the circles to integers
+        circles = np.round(circles[0, :]).astype("int")
+        # loop over the (x, y) coordinates and radius of the circles
+        for (x, y, r) in circles:
+            # draw the circle in the output image, then draw a rectangle
+            # corresponding to the center of the circle
+            circle_img = cv2.circle(output, (x, y), r, (0, 255, 0), 4)
+            fii.show_img(output)
+            # cv2.rectangle(output, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+    fii.show_img(np.hstack(output))
     test_row = img_list[0]
     test_arrs = [convert_to_nums(img) for img in test_row]
-    xor_check = xor_arr_check(*test_arrs)
 
     source1 = img_list[0][0]
     source2 = img_list[0][1]
